@@ -3,13 +3,67 @@ from numpy import array
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2
 from sympy.matrices import Matrix
 
+# These are the rads of joint 3 in resting position
+RADS_AT_REST_JOINT3 = 1.60509488746813
+# These are the rads of joint 2 in resting position
+RADS_AT_REST_JOINT2 = 0.673308313432651
+
+
+# Law of cosines
+def get_theta_3(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_z_offset=0):
+    # TODO enable arm to bend backwards
+    # This solution was adapted from: https://www.youtube.com/watch?v=llUBbpWVPQE time at 4:49
+    x_dist_from_joint2 = (wx / cos(q1)) - joint_2_x_offset
+    z_dist_from_joint2 = wz - joint_2_z_offset
+
+    numerator = (x_dist_from_joint2 ** 2) + (z_dist_from_joint2 ** 2) - (len_link2_3 ** 2) - (len_link3_5 ** 2)
+    denominator = (2 * len_link2_3 * len_link3_5)
+
+    cos_theta = numerator / denominator
+
+    if cos_theta > 1:
+        mod_cos_theta = cos_theta - 1
+        theta_3_elbow_up = atan2(+sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
+        theta_3_elbow_down = atan2(-sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
+    elif cos_theta < 0:
+        theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
+        theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
+    else:
+        theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
+        theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
+
+    return theta_3_elbow_up, theta_3_elbow_down
+
+
+def get_beta(wx, wz, q1, a1=0, d1=0):
+    x_dist_from_joint2 = (wx / cos(q1)) - a1
+    z_dist_from_joint2 = wz - d1
+
+    beta = atan2(z_dist_from_joint2, x_dist_from_joint2)
+
+    return beta
+
+
+def get_alpha(len_link2_3, len_link3_5, theta_3):
+    # TODO fix ugly hack of manually assigning alpha with a negative value
+    alpha_side_adj = cos(theta_3) * len_link3_5
+    alpha_side_opp = sin(theta_3) * len_link3_5
+
+    alpha = -atan2(alpha_side_opp, len_link2_3 + alpha_side_adj)
+    return alpha
+
+
+def get_theta_2(alpha, beta):
+    theta_2 = beta - alpha
+
+    return theta_2
+
 
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
 a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
 alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
-
 
 # DH Parameters
 
@@ -52,7 +106,6 @@ T3_4 = Matrix([ [               cos(q4),              -sin(q4),            0,   
                 [                     0,                     0,            0,                 1]])
 
 T3_4 = T3_4.subs(s)
-
 
 print("halfway through")
 
@@ -107,7 +160,6 @@ R_z = Matrix([
     [            0,               0,        0,      1]
 ])
 
-
 # Rotate along the y axis by -90 degrees
 R_y = Matrix([
     [   cos(-pi/2),      0,      sin(-pi/2),      0],
@@ -119,26 +171,6 @@ R_y = Matrix([
 R_corr = simplify(R_z * R_y)
 # R_corr = R_z * R_y
 
-
-# # Correct wrist orientation
-# W_z = Matrix([
-#     [   cos(pi/2),     -sin(pi/2),        0,      0],
-#     [   sin(pi/2),      cos(pi/2),        0,      0],
-#     [            0,             0,        1,      0],
-#     [            0,             0,        0,      1]
-# ])
-#
-# W_x = Matrix([
-#     [   1,              0,              0,      0],
-#     [   0,      cos(pi/2),     -sin(pi/2),      0],
-#     [   0,      sin(pi/2),      cos(pi/2),      0],
-#     [   0,              0,              0,      1]
-# ])
-#
-# # Rotate joint 5 reference frame via the z axis(90 deg), then via the x axis (90 deg)
-#
-# W_corr = simplify(W_z * W_x)
-
 # q1_val = 0.92
 # q2_val = -0.51
 # q3_val = 1.01
@@ -146,26 +178,26 @@ R_corr = simplify(R_z * R_y)
 # q2_val = .4
 # q3_val = -2.95
 # q4_val = -1.42
-q1_val = 0
+q1_val = -.4
 q2_val = .5
-q3_val = 0
+q3_val = -.12
 q4_val = 0
 q5_val = 0.0
 q6_val = 0.0
 
-print("T0_1 = ", T0_1.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_2 = ", T0_2.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_3 = ", T0_3.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_4 = ", T0_4.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_5 = ", T0_5.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_6 = ", T0_6.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("T0_G = ", T0_G.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
+print("T0_1 = ", T0_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_2 = ", T0_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_3 = ", T0_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_4 = ", T0_4.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_5 = ", T0_5.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_6 = ", T0_6.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("T0_G = ", T0_G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
 T_total = simplify(T0_G * R_corr)
 # T_total = T0_G * R_corr
 
 # print("T_total = ", T_total.evalf(subs={q1: pi/4, q2: pi/4, q3:pi/4, q4:pi/4, q5:pi/4, q6:pi/4}))
-print("T_total = ", T_total.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
+print("T_total = ", T_total.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
 # T_total_evaluated = T_total.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 
@@ -177,93 +209,52 @@ nx = T_total[0, 2]
 ny = T_total[1, 2]
 nz = T_total[2, 2]
 
-# px = T0_G[0, 3]
-# py = T0_G[1, 3]
-# pz = T0_G[2, 3]
-#
-# nx = T0_G[0, 2]
-# ny = T0_G[1, 2]
-# nz = T0_G[2, 2]
+lx = T_total[0, 0]
+ly = T_total[1, 0]
+lz = T_total[2, 0]
 
-# l = symbols("l")
-# l = s[d7]
+dist_wrist_to_effector = s[d7]
+d6_val = s[d6]
 
-# T0_5_corr = T0_5 * W_corr
+# d6 is from the lesson. we use lx, ly, lz for an transform on the x axis instead of nx, ny, nz which is a transform
+# across the z axis
+wx = px - ((d6_val + dist_wrist_to_effector) * lx)
+wy = py - ((d6_val + dist_wrist_to_effector) * ly)
+wz = pz - ((d6_val + dist_wrist_to_effector) * lz)
 
-T0_5_corr = T0_5 # * W_corr
+# get wirst coordinate values
+wx = wx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
+wy = wy.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
+wz = wz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 
-l_dist_x = px - T0_5_corr[0, 3]
-l_dist_y = py - T0_5_corr[1, 3]
-l_dist_z = pz - T0_5_corr[2, 3]
-
-
-# wx = px - ((s[d6]) * nx)
-# wy = py - ((s[d6] + l_dist_y) * ny)
-# wz = pz - ((s[d6] + l_dist_z) * nz)
-
-# wx = px - ((s[d7]) * nx)
-# wy = py - ((s[d7]) * ny)
-# wz = pz - ((s[d7]) * nz)
-
-wx = px - (.303 * nx)
-wy = py - (.303 * ny)
-wz = pz - (.303 * nz)
-
-# wx = px * nx
-# wy = py * ny
-# wz = pz * nz
-
-# print("wx ", wx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-
+# compute theta for joint 1
 theta_1 = atan2(wy, wx)
 
-x_adj_theta_1 = cos(theta_1) * s[a1]
-y_adj_theta_1 = sin(theta_1) * s[a1]
-print("px ", px.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("py ", py.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("pz ", pz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
+# compute the side adjacents of theta 3
+distance_joint_2to3 = s[a2]
+distance_joint_3to5 = sqrt((s[a3] ** 2) + (s[d4] ** 2))
 
-print("wx ", wx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("wy ", wy.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("wz ", wz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("lx ", lx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("ly ", ly.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("lz ", lz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("lx_j5 ", lx_j5.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("ly_j5 ", ly_j5.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-# print("lz_j5 ", lz_j5.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("nx ", nx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("ny ", ny.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("nz ", nz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
+# get the offsets to the origin of joint 2
+x_offset_to_joint2 = s[a1]
+z_offset_to_joint2 = s[d1]
 
+# compute for the 2 possible values of theta 3
+theta_3 = get_theta_3(distance_joint_2to3, distance_joint_3to5, wx, wz, theta_1, x_offset_to_joint2, z_offset_to_joint2)
 
-r_coord = sqrt(((wx - x_adj_theta_1) ** 2) + ((wy - y_adj_theta_1) ** 2))
-# r_coord = sqrt((wx**2) + (wy**2))
-s_coord = wz - s[d1]
+# choose the first of the two theta_3 results, which is the elbow up result
+adjusted_theta_3 = theta_3[0].evalf() - RADS_AT_REST_JOINT3
 
-# TODO get theta 2 to return q2
-theta_2 = atan2(s_coord, r_coord)
+# compute the parts used for theta 2
+alpha = get_alpha(distance_joint_2to3, distance_joint_3to5, adjusted_theta_3)
+beta = get_beta(wx, wz, theta_1, s[a1], s[d1])
 
-x_adj_theta_2 = cos(theta_1 * (s[a1] + (cos(theta_2) * s[a2])))
-y_adj_theta_2 = sin(theta_1 * (s[a1] + (sin(theta_2) * s[a2])))
-z_adj_theta_2 = sin(theta_2) * s[a2]
-
-r_2_coord = sqrt(((wx - x_adj_theta_2) ** 2) + ((wy - y_adj_theta_2) ** 2))
-s_2_coord = wz - s[d1] - z_adj_theta_2
-
-theta_3 = atan2(s_2_coord, r_2_coord)
-
-
-# print("simplifying theta values")
-# theta_1 = simplify(theta_1)
-# theta_2 = simplify(theta_2)
-# theta_3 = simplify(theta_3)
-
+# compute theta 2 value
+theta_2 = RADS_AT_REST_JOINT2 - get_theta_2(alpha, beta).evalf()
 
 print("theta_1 ", theta_1)
 print("theta_2 ", theta_2)
-print("theta_3 ", theta_3)
+print("theta_3 ", adjusted_theta_3)
 
-print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
-print("theta_3 ", theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val}))
+print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta_3 ", adjusted_theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
