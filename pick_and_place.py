@@ -188,10 +188,10 @@ T0_G = simplify(T0_6 * T6_G)
 
 print("computing orientations")
 
-# Rotate z by 90 degrees
+# Rotate z by 180 degrees
 R_z = Matrix([
-    [   cos(pi/2),     -sin(pi/2),        0,      0],
-    [   sin(pi/2),      cos(pi/2),        0,      0],
+    [   cos(pi),     -sin(pi),        0,      0],
+    [   sin(pi),      cos(pi),        0,      0],
     [         0,            0,        1,      0],
     [         0,            0,        0,      1]
 ])
@@ -204,6 +204,16 @@ R_y = Matrix([
     [            0,      0,               0,      1]
 ])
 
+R_corr_4_6_and_gripper = simplify(R_z * R_y)
+
+# Rotate along the z axis by 90 degrees
+R_z90 = Matrix([
+    [   cos(pi/2),     -sin(pi/2),        0,      0],
+    [   sin(pi/2),      cos(pi/2),        0,      0],
+    [         0,            0,        1,      0],
+    [         0,            0,        0,      1]
+])
+
 R_x = Matrix([
     [   1,              0,              0,      0],
     [   0,      cos(pi/2),     -sin(pi/2),      0],
@@ -211,8 +221,7 @@ R_x = Matrix([
     [   0,              0,              0,      1]
 ])
 
-R_corr_4_6_and_gripper = simplify(R_z * R_y)
-R_corr_3_and_5 = simplify(R_z * R_x)
+R_corr_3_and_5 = simplify(R_z90 * R_x)
 
 
 # q1_val = 0.92
