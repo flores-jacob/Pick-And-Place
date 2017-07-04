@@ -59,6 +59,26 @@ def get_theta_2(alpha, beta):
     return theta_2
 
 
+def get_rpy(rotation_matrix):
+    # solution adapted from this page http://nghiaho.com/?page_id=846
+    r11 = rotation_matrix[0, 0]
+    r12 = rotation_matrix[0, 1]
+    r13 = rotation_matrix[0, 2]
+
+    r21 = rotation_matrix[1, 0]
+    r22 = rotation_matrix[1, 1]
+    r23 = rotation_matrix[1, 2]
+
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    theta_x = atan2(r32, r33)
+    theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+    theta_z = atan2(r21, r11)
+
+    return (theta_x, theta_y, theta_z)
+
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
@@ -133,19 +153,19 @@ T6_G = T6_G.subs(s)
 
 print("Done with individual matrices, proceeding to multiply")
 
-# T0_2 = simplify(T0_1 * T1_2)
-# T0_3 = simplify(T0_2 * T2_3)
-# T0_4 = simplify(T0_3 * T3_4)
-# T0_5 = simplify(T0_4 * T4_5)
-# T0_6 = simplify(T0_5 * T5_6)
-# T0_G = simplify(T0_6 * T6_G)
+T0_2 = simplify(T0_1 * T1_2)
+T0_3 = simplify(T0_2 * T2_3)
+T0_4 = simplify(T0_3 * T3_4)
+T0_5 = simplify(T0_4 * T4_5)
+T0_6 = simplify(T0_5 * T5_6)
+T0_G = simplify(T0_6 * T6_G)
 
-T0_2 = T0_1 * T1_2
-T0_3 = T0_2 * T2_3
-T0_4 = T0_3 * T3_4
-T0_5 = T0_4 * T4_5
-T0_6 = T0_5 * T5_6
-T0_G = T0_6 * T6_G
+# T0_2 = T0_1 * T1_2
+# T0_3 = T0_2 * T2_3
+# T0_4 = T0_3 * T3_4
+# T0_5 = T0_4 * T4_5
+# T0_6 = T0_5 * T5_6
+# T0_G = T0_6 * T6_G
 
 
 # Gripper link  orientation correction so that URDF values are in accordance with DH Convention
@@ -168,8 +188,8 @@ R_y = Matrix([
     [            0,      0,               0,      1]
 ])
 
-# R_corr = simplify(R_z * R_y)
-R_corr = R_z * R_y
+R_corr = simplify(R_z * R_y)
+# R_corr = R_z * R_y
 
 # q1_val = 0.92
 # q2_val = -0.51
@@ -181,15 +201,18 @@ R_corr = R_z * R_y
 # q1_val = -.4
 # q2_val = .5
 # q3_val = -.12
+# q1_val = .8
+# q2_val = -.1
+# q3_val = .25
 q1_val = 0
 q2_val = 0
 q3_val = 0
-# q4_val = 0
-# q5_val = 0.0
-# q6_val = 0.0
-q4_val = .4
-q5_val = 0.4
-q6_val = -.4
+q4_val = 0
+q5_val = 0.0
+q6_val = 0.0
+# q4_val = 1
+# q5_val = -1
+# q6_val = .3
 
 
 print("T0_1 = ", T0_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
@@ -200,8 +223,8 @@ print("T0_5 = ", T0_5.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val
 print("T0_6 = ", T0_6.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("T0_G = ", T0_G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-# T_total = simplify(T0_G * R_corr)
-T_total = T0_G * R_corr
+T_total = simplify(T0_G * R_corr)
+# T_total = T0_G * R_corr
 
 print("T_total = ", T_total.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
@@ -231,6 +254,10 @@ wx = wx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:
 wy = wy.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 wz = wz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 
+print("wx ", wx)
+print("wy ", wy)
+print("wz ", wz)
+
 # compute theta for joint 1
 theta_1 = atan2(wy, wx)
 
@@ -255,9 +282,9 @@ beta = get_beta(wx, wz, theta_1, s[a1], s[d1])
 # compute theta 2 value
 theta_2 = RADS_AT_REST_JOINT2 - get_theta_2(alpha, beta).evalf()
 
-print("theta_1 ", theta_1)
-print("theta_2 ", theta_2)
-print("theta_3 ", adjusted_theta_3)
+# print("theta_1 ", theta_1)
+# print("theta_2 ", theta_2)
+# print("theta_3 ", adjusted_theta_3)
 
 print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
@@ -281,46 +308,114 @@ R4_5 = T4_5[0:3, 0:3]
 R5_6 = T5_6[0:3, 0:3]
 R6_G = T6_G[0:3, 0:3]
 
-# Rotation from base to the 3rd joint
-R0_3 = R0_1 * R1_2 * R2_3 * R_corr[0:3, 0:3]
+# # Rotation from base to the 3rd joint
+# R0_3 = R0_1 * R1_2 * R2_3 * R3_4 * R_corr[0:3, 0:3]
+#
+# # Rotation from the base to the gripper
+# R0_G = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R6_G
+# R_Total = R0_G * R_corr[0:3, 0:3]
 
-# Rotation from the base to the gripper
-R0_G = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R6_G
-R_Total = R0_G * R_corr[0:3, 0:3]
+# Rotation from base to the 3rd joint
+# R0_3 = R0_1 * R1_2 * R2_3 * R_corr[0:3, 0:3]
+R0_3 = simplify(T0_3[0:3, 0:3] * R_corr[0:3, 0:3])
+# R0_3 = T0_3[0:3, 0:3] * R_corr[0:3, 0:3]
+
+
+# Rotation from base to the 4th joint
+# R0_4 = R0_1 * R1_2 * R2_3 * R3_4 * R_corr[0:3, 0:3]
+R0_4 = simplify(T0_4[0:3, 0:3] * R_corr[0:3, 0:3])
+# R0_4 = T0_4[0:3, 0:3] * R_corr[0:3, 0:3]
+
+
+# Rotation from base to the 5th joint
+# R0_5 = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R_corr[0:3, 0:3]
+R0_5 = simplify(T0_5[0:3, 0:3] * R_corr[0:3, 0:3])
+# R0_5 = T0_5[0:3, 0:3] * R_corr[0:3, 0:3]
+
+
+# Rotation from base to the 6th joint
+# R0_6 = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R_corr[0:3, 0:3]
+R0_6 = simplify(T0_6[0:3, 0:3] * R_corr[0:3, 0:3])
+# R0_6 = T0_6[0:3, 0:3] * R_corr[0:3, 0:3]
+
+
+# Rotation from base to the gripper joint
+# R0_G = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R6_G * R_corr[0:3, 0:3]
+# R0_G = simplify(T0_G[0:3, 0:3] * R_corr[0:3, 0:3])
+
+# # Rotation from the base to the gripper
+# R0_G = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R6_G
+# R_Total = R0_G * R_corr[0:3, 0:3]
+
+# R_Total = R0_G
+R_Total = R0_6
+
+print("applying rotations")
 
 # Rotation from R3 to the End Effector
-R_product = R0_3.inv() * R_Total
+# R_product = R0_3.inv() * R_Total
+R_product = simplify(R0_3.inv() * R_Total)
 
-print("R total 1", R_product.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-print("R total 2", R_product.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: 0.44, q5: q5_val, q6: q6_val}))
+# Rotation from the third joint to the 4th joint
+# R_3to4 = R0_3.inv() * R0_4
+R_3to4 = simplify(R0_3.inv() * R0_4)
 
+# Rotation from the 4th joint to the 5th joint
+# R_4to5 = R0_4.inv() * R0_5
+R_4to5 = simplify(R0_4.inv() * R0_5)
+
+
+print("almost done")
+# Rotation from the 5th joint to the 6th joint
+# R_5to6 = R0_5.inv() * R0_6
+# R_5to6 = simplify(R0_5.inv() * R0_6)
+
+
+# print("computing 6 to G")
+# Rotation from the 6th joint to the gripper joint
+# R_6toG = R0_6.inv() * R0_G
+
+print("done with multiplications")
+
+# print("R total 1", R_product.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("R total 2", R_product.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: 0.44, q5: q5_val, q6: q6_val}))
 
 # R3_EE = simplify(T0_3.inv() * T_total)
-R3_EE = T0_3.inv() * T_total
+# R3_EE = T0_3.inv() * T_total
+#
+# print(R3_EE[0:3, 0:3].evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+
+print("computing rpy values")
+
+theta_x3EE, theta_y3EE, theta_z3EE = get_rpy(R_product)
+theta_x34, theta_y34, theta_z34 = get_rpy(R_3to4)
+print("halfway done")
+theta_x45, theta_y45, theta_z45 = get_rpy(R_4to5)
+print("computing 5 to 6")
+# theta_x56, theta_y56, theta_z56 = get_rpy(R_5to6)
+# print("computing 6 to G")
+# theta_x6G, theta_y6G, theta_z6G = get_rpy(R_6toG)
 
 
-print(R3_EE[0:3, 0:3].evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta x 3EE", theta_x3EE.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta y 3EE", theta_y3EE.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta z 3EE", theta_z3EE.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
 
-# solution adapted from this page http://nghiaho.com/?page_id=846
-r11 = R_product[0, 0]
-r12 = R_product[0, 1]
-r13 = R_product[0, 2]
+print("theta x 34", theta_x34.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta y 34", theta_y34.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta z 34", theta_z34.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-r21 = R_product[1, 0]
-r22 = R_product[1, 1]
-r23 = R_product[1, 2]
+print("theta x 45", theta_x45.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta y 45", theta_y45.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("theta z 45", theta_z45.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-r31 = R_product[2, 0]
-r32 = R_product[2, 1]
-r33 = R_product[2, 2]
+# print("theta x 56", theta_x56.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta y 56", theta_y56.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta z 56", theta_z56.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-theta_x = atan2(r32, r33)
-theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
-theta_z = atan2(r21, r11)
-
-print("theta x ", theta_x.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-print("theta y ", theta_y.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-print("theta z ", theta_z.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta x 6G", theta_x6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta y 6G", theta_y6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta z 6G", theta_z6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
 
