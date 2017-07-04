@@ -1,12 +1,20 @@
 import numpy as np
 from numpy import array
-from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2
+from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
 from sympy.matrices import Matrix
 
 # These are the rads of joint 3 in resting position
-RADS_AT_REST_JOINT3 = 1.60509488746813
+# RADS_AT_REST_JOINT3 = 1.60509488746813
+# RADS_AT_REST_JOINT3 = 1.60926888235184
+RADS_AT_REST_JOINT3 = 1.60678078687695
+
 # These are the rads of joint 2 in resting position
-RADS_AT_REST_JOINT2 = 0.673308313432651
+# RADS_AT_REST_JOINT2 = 0.673308313432651
+# RADS_AT_REST_JOINT2 = 0.674740942223551
+# RADS_AT_REST_JOINT2 = 0.674740942223554
+# RADS_AT_REST_JOINT2 = 0.671755266989842
+RADS_AT_REST_JOINT2 = 1.57079632679490
+# 1.57324022779343
 
 
 # Law of cosines
@@ -44,17 +52,25 @@ def get_beta(wx, wz, q1, a1=0, d1=0):
     return beta
 
 
-def get_alpha(len_link2_3, len_link3_5, theta_3):
-    # TODO fix ugly hack of manually assigning alpha with a negative value
-    alpha_side_adj = cos(theta_3) * len_link3_5
-    alpha_side_opp = sin(theta_3) * len_link3_5
+def get_alpha(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_z_offset=0):
+    x_dist_from_joint2 = (wx / cos(q1)) - joint_2_x_offset
+    z_dist_from_joint2 = wz - joint_2_z_offset
 
-    alpha = -atan2(alpha_side_opp, len_link2_3 + alpha_side_adj)
+    side_adj1 = len_link2_3
+    side_adj2 = sqrt((x_dist_from_joint2 ** 2) + (z_dist_from_joint2 ** 2))
+    side_opp = len_link3_5
+
+    numerator = (side_opp ** 2) - (side_adj1 ** 2) - (side_adj2 ** 2)
+    denominator = -2 * side_adj1 * side_adj2
+    cos_alpha = numerator/denominator
+
+    alpha = acos(cos_alpha)
+
     return alpha
 
 
 def get_theta_2(alpha, beta):
-    theta_2 = beta - alpha
+    theta_2 = beta + alpha
 
     return theta_2
 
@@ -172,10 +188,10 @@ T0_G = simplify(T0_6 * T6_G)
 
 print("computing orientations")
 
-# Rotate z by 180 degrees
+# Rotate z by 90 degrees
 R_z = Matrix([
-    [   cos(pi),     -sin(pi),        0,      0],
-    [   sin(pi),      cos(pi),        0,      0],
+    [   cos(pi/2),     -sin(pi/2),        0,      0],
+    [   sin(pi/2),      cos(pi/2),        0,      0],
     [         0,            0,        1,      0],
     [         0,            0,        0,      1]
 ])
@@ -188,8 +204,16 @@ R_y = Matrix([
     [            0,      0,               0,      1]
 ])
 
-R_corr = simplify(R_z * R_y)
-# R_corr = R_z * R_y
+R_x = Matrix([
+    [   1,              0,              0,      0],
+    [   0,      cos(pi/2),     -sin(pi/2),      0],
+    [   0,      sin(pi/2),      cos(pi/2),      0],
+    [   0,              0,              0,      1]
+])
+
+R_corr_4_6_and_gripper = simplify(R_z * R_y)
+R_corr_3_and_5 = simplify(R_z * R_x)
+
 
 # q1_val = 0.92
 # q2_val = -0.51
@@ -201,13 +225,13 @@ R_corr = simplify(R_z * R_y)
 # q1_val = -.4
 # q2_val = .5
 # q3_val = -.12
-# q1_val = .8
-# q2_val = -.1
-# q3_val = .25
-q1_val = 0
-q2_val = 0
-q3_val = 0
-q4_val = 0
+q1_val = .8
+q2_val = -.1
+q3_val = .25
+# q1_val = 0.0
+# q2_val = 0.0
+# q3_val = 0.0
+q4_val = 0.0
 q5_val = 0.0
 q6_val = 0.0
 # q4_val = 1
@@ -223,7 +247,7 @@ print("T0_5 = ", T0_5.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val
 print("T0_6 = ", T0_6.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("T0_G = ", T0_G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-T_total = simplify(T0_G * R_corr)
+T_total = simplify(T0_G * R_corr_4_6_and_gripper)
 # T_total = T0_G * R_corr
 
 print("T_total = ", T_total.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
@@ -254,6 +278,12 @@ wx = wx.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:
 wy = wy.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 wz = wz.evalf(subs={q1: q1_val, q2: q2_val, q3:q3_val, q4:q4_val, q5:q5_val, q6:q6_val})
 
+# wx = 1.1868
+#
+# wy = 1.2207
+#
+# wz = 1.7115
+
 print("wx ", wx)
 print("wy ", wy)
 print("wz ", wz)
@@ -276,11 +306,13 @@ theta_3 = get_theta_3(distance_joint_2to3, distance_joint_3to5, wx, wz, theta_1,
 adjusted_theta_3 = theta_3[0].evalf() - RADS_AT_REST_JOINT3
 
 # compute the parts used for theta 2
-alpha = get_alpha(distance_joint_2to3, distance_joint_3to5, adjusted_theta_3)
+alpha = get_alpha(distance_joint_2to3, distance_joint_3to5, wx, wz, theta_1, joint_2_x_offset=s[a1], joint_2_z_offset=s[d1])
 beta = get_beta(wx, wz, theta_1, s[a1], s[d1])
 
+unadjusted_theta_2 = get_theta_2(alpha, beta).evalf()
+
 # compute theta 2 value
-theta_2 = RADS_AT_REST_JOINT2 - get_theta_2(alpha, beta).evalf()
+theta_2 = RADS_AT_REST_JOINT2 - unadjusted_theta_2
 
 # print("theta_1 ", theta_1)
 # print("theta_2 ", theta_2)
@@ -289,6 +321,9 @@ theta_2 = RADS_AT_REST_JOINT2 - get_theta_2(alpha, beta).evalf()
 print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("theta_3 ", adjusted_theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+
+print("unadjusted theta_2 ", unadjusted_theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+print("unadjusted theta_3 ", theta_3[0].evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
 
 # R0_1 = T0_1[0:3, 0:3].subs(s)
@@ -317,25 +352,25 @@ R6_G = T6_G[0:3, 0:3]
 
 # Rotation from base to the 3rd joint
 # R0_3 = R0_1 * R1_2 * R2_3 * R_corr[0:3, 0:3]
-R0_3 = simplify(T0_3[0:3, 0:3] * R_corr[0:3, 0:3])
+R0_3 = simplify(T0_3[0:3, 0:3] * R_corr_3_and_5[0:3, 0:3])
 # R0_3 = T0_3[0:3, 0:3] * R_corr[0:3, 0:3]
 
 
 # Rotation from base to the 4th joint
 # R0_4 = R0_1 * R1_2 * R2_3 * R3_4 * R_corr[0:3, 0:3]
-R0_4 = simplify(T0_4[0:3, 0:3] * R_corr[0:3, 0:3])
+R0_4 = simplify(T0_4[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3])
 # R0_4 = T0_4[0:3, 0:3] * R_corr[0:3, 0:3]
 
 
 # Rotation from base to the 5th joint
 # R0_5 = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R_corr[0:3, 0:3]
-R0_5 = simplify(T0_5[0:3, 0:3] * R_corr[0:3, 0:3])
+R0_5 = simplify(T0_5[0:3, 0:3] * R_corr_3_and_5[0:3, 0:3])
 # R0_5 = T0_5[0:3, 0:3] * R_corr[0:3, 0:3]
 
 
 # Rotation from base to the 6th joint
 # R0_6 = R0_1 * R1_2 * R2_3 * R3_4 * R4_5 * R5_6 * R_corr[0:3, 0:3]
-R0_6 = simplify(T0_6[0:3, 0:3] * R_corr[0:3, 0:3])
+R0_6 = simplify(T0_6[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3])
 # R0_6 = T0_6[0:3, 0:3] * R_corr[0:3, 0:3]
 
 
