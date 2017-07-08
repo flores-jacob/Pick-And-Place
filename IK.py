@@ -3,7 +3,7 @@ from numpy import array, ndarray
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
 from sympy.matrices import Matrix
 
-import test_samples
+from sample_data import given_values, correct_values
 
 # These are the rads of joint 3 in resting position
 # RADS_AT_REST_JOINT3 = 1.60509488746813
@@ -403,9 +403,9 @@ Rrpy = np.asarray([
 # pz = 1.5811458368578455
 
 
-roll = test_samples.given_values["shelf_4"]["roll"]
-pitch = test_samples.given_values["shelf_4"]["pitch"]
-yaw = test_samples.given_values["shelf_4"]["yaw"]
+roll = given_values["shelf_4"]["roll"]
+pitch = given_values["shelf_4"]["pitch"]
+yaw = given_values["shelf_4"]["yaw"]
 
 Rot_X = rotate_x(roll)
 Rot_Y = rotate_y(pitch)
@@ -463,7 +463,7 @@ theta_2 = RADS_AT_REST_JOINT2 - unadjusted_theta_2
 theta2 = theta_2.evalf()
 
 print("theta1 ", theta1)
-print("expected theta1 ", test_samples.correct_values["shelf_4"]["joint_1"])
+print("expected theta1 ", correct_values["shelf_4"]["joint_1"])
 print("theta2 ", theta2)
 print("theta3 ", theta3)
 
@@ -493,29 +493,3 @@ theta6 = -theta4
 print("theta4 ", theta4)
 print("theta5 ", theta5)
 print("theta6 ", theta6)
-
-
-for shelf in test_samples.given_values:
-    roll = test_samples.given_values[shelf]["roll"]
-    pitch = test_samples.given_values[shelf]["pitch"]
-    yaw = test_samples.given_values[shelf]["yaw"]
-
-    Rrpy = generate_rrpy_matrix(roll, pitch, yaw)
-
-    px = test_samples.given_values[shelf]["px"]
-    py = test_samples.given_values[shelf]["py"]
-    pz = test_samples.given_values[shelf]["pz"]
-
-    # should be s[d7] + s[d6] or .303, however .197 works better
-    dist_wrist_to_effector = 0.197
-
-    wx, wy, wz = get_wrist_coordinates(Rrpy, dist_wrist_to_effector)
-
-    # compute theta for joint 1
-    theta1 = atan2(wy, wx)
-    # theta_1 = theta_1.evalf()
-    # theta1 = theta_1.evalf()
-    print(shelf)
-    print(py)
-    print("expected theta1", test_samples.correct_values[shelf]["joint_1"])
-    print("theta1         ", theta1)
