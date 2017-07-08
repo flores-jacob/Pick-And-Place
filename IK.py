@@ -3,16 +3,14 @@ from numpy import array, ndarray
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
 from sympy.matrices import Matrix
 
+import test_samples
+
 # These are the rads of joint 3 in resting position
 # RADS_AT_REST_JOINT3 = 1.60509488746813
 # RADS_AT_REST_JOINT3 = 1.60926888235184
 RADS_AT_REST_JOINT3 = 1.60678078687695
 
 # These are the rads of joint 2 in resting position
-# RADS_AT_REST_JOINT2 = 0.673308313432651
-# RADS_AT_REST_JOINT2 = 0.674740942223551
-# RADS_AT_REST_JOINT2 = 0.674740942223554
-# RADS_AT_REST_JOINT2 = 0.671755266989842
 RADS_AT_REST_JOINT2 = 1.57079632679490
 
 RADS_AT_REST_JOINT4 = 1.57079632679490
@@ -168,6 +166,30 @@ def rotate_y(rads):
 
     return rotated
 
+
+def get_wrist_coordinates(Rrpy, dist_wrist_to_effector):
+    lx = Rrpy[0, 0]
+    ly = Rrpy[1, 0]
+    lz = Rrpy[2, 0]
+
+    # d6 is from the lesson. we use lx, ly, lz for an transform on the x axis instead of nx, ny, nz which is a transform
+    # across the z axis
+    wx = px - (dist_wrist_to_effector * lx)
+    wy = py - (dist_wrist_to_effector * ly)
+    wz = pz - (dist_wrist_to_effector* lz)
+
+    return wx, wy, wz
+
+
+def generate_rrpy_matrix(roll, pitch, yaw):
+    Rot_X = rotate_x(roll)
+    Rot_Y = rotate_y(pitch)
+    Rot_Z = rotate_z(yaw)
+
+    Rrpy = Rot_Z * Rot_Y * Rot_X
+
+    return Rrpy
+
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
@@ -240,19 +262,8 @@ T6_G = T6_G.subs(s)
 
 print("Done with individual matrices, proceeding to multiply")
 
-# T0_2 = simplify(T0_1 * T1_2)
-# T0_3 = simplify(T0_2 * T2_3)
-# T0_4 = simplify(T0_3 * T3_4)
-# T0_5 = simplify(T0_4 * T4_5)
-# T0_6 = simplify(T0_5 * T5_6)
-# T0_G = simplify(T0_6 * T6_G)
-
 T0_2 = T0_1 * T1_2
 T0_3 = T0_2 * T2_3
-# T0_4 = T0_3 * T3_4
-# T0_5 = T0_4 * T4_5
-# T0_6 = T0_5 * T5_6
-# T0_G = T0_6 * T6_G
 
 # Gripper link  orientation correction so that URDF values are in accordance with DH Convention
 
@@ -277,6 +288,7 @@ R_y = Matrix([
 # R_corr_4_6_and_gripper = simplify(R_z * R_y)
 R_corr_4_6_and_gripper = R_z * R_y
 
+
 # Rotate along the z axis by 90 degrees
 R_z90 = Matrix([
     [cos(pi / 2), -sin(pi / 2), 0, 0],
@@ -295,40 +307,13 @@ R_x = Matrix([
 # R_corr_3_and_5 = simplify(R_z90 * R_x)
 R_corr_3_and_5 = R_z90 * R_x
 
-
-
-T_total = array([[9.99999848e-01, 5.47482962e-04, -5.93986389e-05,
-                  0.00000000e+00],
-                 [-5.47458560e-04, 9.99999766e-01, 4.10063924e-04,
-                  0.00000000e+00],
-                 [5.96231280e-05, -4.10031344e-04, 9.99999914e-01,
-                  0.00000000e+00],
-                 [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
-                  1.00000000e+00]])
-
-# px = T_total[0, 3]
-# py = T_total[1, 3]
-# pz = T_total[2, 3]
-
-# nx = T_total[0, 2]
-# ny = T_total[1, 2]
-# nz = T_total[2, 2]
-
-
 # compose rotation matrix
 # procedure taken from http://nghiaho.com/?page_id=846
 
-roll = 0
-pitch = 0
-yaw = 0
 
-Rot_X = rotate_x(roll)
-Rot_Y = rotate_y(pitch)
-Rot_Z = rotate_z(yaw)
-
-Rrpy2 = Rot_Z * Rot_Y * Rot_X
-
-print("generated matrix", Rrpy2)
+# insert test cases and given data here the first objective is to produce Rrpy that is consistent with
+# the one in Gazebo we will first obtain the givens in gazebo, roll, pitch, yaw and position coords we will
+# then proceed to construct the Rrpy
 
 # generate_rot_matrix = yaw * pitch * roll
 
@@ -346,6 +331,34 @@ Rrpy = np.asarray([[  9.99999455e-01,  -9.98744949e-04,   3.02840662e-04,
 px = 2.0899794436124215
 py = 0.9001324988518173
 pz = 1.5810668259285738
+
+
+
+
+# Rrpy for shelf 4 ryzy version
+# computed using ryzy
+Rrpy = np.asarray([[  9.99999681e-01,   4.58185713e-04,  -6.54029113e-04,
+          0.00000000e+00],
+       [ -4.58185613e-04,   9.99999895e-01,   3.02519797e-07,
+          0.00000000e+00],
+       [  6.54029183e-04,  -2.85297069e-09,   9.99999786e-01,
+          0.00000000e+00],
+       [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
+          1.00000000e+00]])
+
+px = 2.0900268663882255
+py = 0.9000621976697936
+pz = 1.5810337949811457
+
+
+Rrpy = np.asarray([
+[    0.999999677064026, 0.00066025299681594, -0.000458189724437495, 0],
+[-0.000660255780493678,   0.999999782013581,  -5.92414765511909e-6, 0],
+[ 0.000458185713122114, 6.22666815612136e-6,     0.999999895013535, 0],
+[                    0,                   0,                     0, 1]])
+
+
+
 
 # Rrpy = array([[  9.99999947e-01,   7.64667591e-05,  -3.15630087e-04,
 #           0.00000000e+00],
@@ -390,6 +403,19 @@ pz = 1.5810668259285738
 # pz = 1.5811458368578455
 
 
+roll = test_samples.given_values["shelf_4"]["roll"]
+pitch = test_samples.given_values["shelf_4"]["pitch"]
+yaw = test_samples.given_values["shelf_4"]["yaw"]
+
+Rot_X = rotate_x(roll)
+Rot_Y = rotate_y(pitch)
+Rot_Z = rotate_z(yaw)
+
+Rrpy = Rot_Z * Rot_Y * Rot_X
+
+print("generated matrix", Rrpy)
+
+
 
 lx = Rrpy[0, 0]
 ly = Rrpy[1, 0]
@@ -403,14 +429,6 @@ d6_val = s[d6]
 wx = px - (.193 * lx)
 wy = py - (.193 * ly)
 wz = pz - (.193 * lz)
-
-print("px ", px)
-print("py ", py)
-print("pz ", pz)
-
-print("wx ", wx)
-print("wy ", wy)
-print("wz ", wz)
 
 # compute theta for joint 1
 theta_1 = pi/2 - atan2(wx, wy)
@@ -445,6 +463,7 @@ theta_2 = RADS_AT_REST_JOINT2 - unadjusted_theta_2
 theta2 = theta_2.evalf()
 
 print("theta1 ", theta1)
+print("expected theta1 ", test_samples.correct_values["shelf_4"]["joint_1"])
 print("theta2 ", theta2)
 print("theta3 ", theta3)
 
@@ -474,3 +493,29 @@ theta6 = -theta4
 print("theta4 ", theta4)
 print("theta5 ", theta5)
 print("theta6 ", theta6)
+
+
+for shelf in test_samples.given_values:
+    roll = test_samples.given_values[shelf]["roll"]
+    pitch = test_samples.given_values[shelf]["pitch"]
+    yaw = test_samples.given_values[shelf]["yaw"]
+
+    Rrpy = generate_rrpy_matrix(roll, pitch, yaw)
+
+    px = test_samples.given_values[shelf]["px"]
+    py = test_samples.given_values[shelf]["py"]
+    pz = test_samples.given_values[shelf]["pz"]
+
+    # should be s[d7] + s[d6] or .303, however .197 works better
+    dist_wrist_to_effector = 0.197
+
+    wx, wy, wz = get_wrist_coordinates(Rrpy, dist_wrist_to_effector)
+
+    # compute theta for joint 1
+    theta1 = atan2(wy, wx)
+    # theta_1 = theta_1.evalf()
+    # theta1 = theta_1.evalf()
+    print(shelf)
+    print(py)
+    print("expected theta1", test_samples.correct_values[shelf]["joint_1"])
+    print("theta1         ", theta1)
