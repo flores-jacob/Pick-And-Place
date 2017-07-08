@@ -1,5 +1,6 @@
 from sample_data import given_values, correct_values
-from IK import generate_rrpy_matrix, get_wrist_coordinates, get_theta_3
+from IK import generate_rrpy_matrix, get_wrist_coordinates, get_theta_3, get_alpha, get_beta, get_theta_2, \
+    RADS_AT_REST_JOINT2, T0_3, R_corr_3_and_5, R_corr_4_6_and_gripper, rotate_x, rotate_z, rotate_y, get_pitch, get_roll
 from IK import RADS_AT_REST_JOINT3
 
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
@@ -33,7 +34,7 @@ for shelf in given_values:
     py = given_values[shelf]["py"]
     pz = given_values[shelf]["pz"]
 
-    # should be s[d7] + s[d6] or .303, however .197 works better
+    # should be s[d7] + s[d6] or .303, however .193 works better
     dist_wrist_to_effector = 0.303
 
     wx, wy, wz = get_wrist_coordinates(Rrpy, px, py, pz, dist_wrist_to_effector)
@@ -41,23 +42,20 @@ for shelf in given_values:
     expected_wx = correct_values[shelf]["wx"]
     expected_wy = correct_values[shelf]["wy"]
     expected_wz = correct_values[shelf]["wz"]
-
-    # print("expected wx ", expected_wx)
-    # print("wx          ", wx)
-    # print("expected wy ", expected_wy)
-    # print("wy          ", wy)
-    # print("expected wz ", expected_wz)
-    # print("wz          ", wz)
     # assert (round(wx, 1) == round(expected_wx, 1)), (str(shelf) + " wx mismatch " + wx + " " + expected_wx)
     # assert (round(wy, 1) == round(expected_wy, 1)), (str(shelf) + " wy mismatch " + wy + " " + expected_wy)
     # assert (round(wz, 1) == round(expected_wz, 1)), (str(shelf) + " wz mismatch " + wz + " " + expected_wz)
 
     if round(wx, 1) != round(expected_wx, 1):
-        print(str(shelf) + " wx mismatch ",  wx, expected_wx)
+        print(str(shelf) + " wx mismatch ", wx, expected_wx)
     if round(wy, 1) != round(expected_wy, 1):
-        print(str(shelf) + " wy mismatch ",  wy, expected_wy)
+        print(str(shelf) + " wy mismatch ", wy, expected_wy)
     if round(wz, 1) != round(expected_wz, 1):
         print(str(shelf) + ' wz mismatch ', wz, expected_wz)
+
+    # once we're done checking if we have sane wrist values, we recompute to use .197 for theta computation
+    dist_wrist_to_effector = 0.303
+    wx, wy, wz = get_wrist_coordinates(Rrpy, px, py, pz, dist_wrist_to_effector)
 
     # compute theta for joint 1
     theta1 = atan2(wy, wx)
@@ -67,7 +65,7 @@ for shelf in given_values:
     # print("theta1         ", theta1)
     # assert round(theta1, 2) == round(expected_theta1, 2), "theta1 mismatch"
 
-    if round(theta1, 2) == round(expected_theta1, 2):
+    if round(theta1, 2) != round(expected_theta1, 2):
         print("theta1 mismatch", theta1, expected_theta1)
 
     # compute theta3
@@ -86,5 +84,58 @@ for shelf in given_values:
     # choose the first of the two theta_3 results, which is the elbow up result
     theta3 = unadjusted_theta_3[0].evalf() - RADS_AT_REST_JOINT3
     expected_theta3 = correct_values[shelf]["joint_3"]
-    print("expected theta3", expected_theta3)
-    print("theta3         ", theta3)
+    # assert round(theta3, 2) == round(expected_theta3, 2), "theta3 mismatch"
+
+    if round(theta3, 2) != round(expected_theta3, 2):
+        print("theta3 mismatch", theta3, expected_theta3)
+
+    # compute the parts used for theta 2
+    alpha = get_alpha(distance_joint_2to3, distance_joint_3to5, wx, wz, theta1, joint_2_x_offset=s[a1],
+                      joint_2_z_offset=s[d1])
+    beta = get_beta(wx, wz, theta1, s[a1], s[d1])
+
+    unadjusted_theta_2 = get_theta_2(alpha, beta).evalf()
+
+    # compute theta 2 value
+    theta2 = RADS_AT_REST_JOINT2 - unadjusted_theta_2
+    theta2 = theta2.evalf()
+    expected_theta2 = correct_values[shelf]["joint_2"]
+    # assert round(theta2, 2) == round(expected_theta2, 2), "theta3 mismatch"
+
+    if round(theta2, 2) != round(expected_theta2, 2):
+        print("theta2 mismatch", theta2, expected_theta2)
+
+    # TODO find the correct rotation that will allow us to get accurate measurements for thetas 4,5,6
+    # R0_3 = T0_3[0:3, 0:3]
+    # R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
+    # # R0_3_corr = (R0_3 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # R0_3_corr = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    #
+    # Rrpy_corr = Rrpy[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
+    # R3_6 = R0_3.inv() * Rrpy_corr
+    #
+    # # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    #
+    #
+    #
+    #
+    # R3_6 = (R3_6 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    #
+    # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    #
+    # # Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
+    # # are the formulas that return the desired values base on the different permutations we have tried
+    # theta4 = get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # theta5 = -get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # # theta6 is simply the reverse of theta4
+    # theta6 = -theta4
+    #
+    # expected_theta4 = correct_values[shelf]["joint_4"]
+    # expected_theta5 = correct_values[shelf]["joint_5"]
+    #
+    # print("expected theta4 ", expected_theta4)
+    # print("theta4          ", theta4)
+    # print("expected theta5 ", expected_theta5)
+    # print("theta5          ", theta5)
