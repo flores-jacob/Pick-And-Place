@@ -167,7 +167,65 @@ def rotate_y(rads):
     return rotated
 
 
-def get_wrist_coordinates(Rrpy, dist_wrist_to_effector):
+def rot_alpha(rotation_matrix):
+    r11 = rotation_matrix[0, 0]
+    r12 = rotation_matrix[0, 1]
+    r13 = rotation_matrix[0, 2]
+
+    r21 = rotation_matrix[1, 0]
+    r22 = rotation_matrix[1, 1]
+    r23 = rotation_matrix[1, 2]
+
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    theta_x = atan2(r32, r33)
+    theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+    theta_z = atan2(r21, r11)
+
+    alpha_rotation = atan2(r21, r11)
+
+    return alpha_rotation
+
+
+def rot_beta(rotation_matrix):
+    r11 = rotation_matrix[0, 0]
+    r12 = rotation_matrix[0, 1]
+    r13 = rotation_matrix[0, 2]
+
+    r21 = rotation_matrix[1, 0]
+    r22 = rotation_matrix[1, 1]
+    r23 = rotation_matrix[1, 2]
+
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    beta_rotation = atan2(-r31, sqrt((r11 * r11) + (r21 * r21)))
+
+    return beta_rotation
+
+
+def rot_gamma(rotation_matrix):
+    r11 = rotation_matrix[0, 0]
+    r12 = rotation_matrix[0, 1]
+    r13 = rotation_matrix[0, 2]
+
+    r21 = rotation_matrix[1, 0]
+    r22 = rotation_matrix[1, 1]
+    r23 = rotation_matrix[1, 2]
+
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    gamma_rotation = atan2(r32, r33)
+
+    return gamma_rotation
+
+
+def get_wrist_coordinates(Rrpy, px, py, pz, dist_wrist_to_effector):
     lx = Rrpy[0, 0]
     ly = Rrpy[1, 0]
     lz = Rrpy[2, 0]
@@ -176,15 +234,19 @@ def get_wrist_coordinates(Rrpy, dist_wrist_to_effector):
     # across the z axis
     wx = px - (dist_wrist_to_effector * lx)
     wy = py - (dist_wrist_to_effector * ly)
-    wz = pz - (dist_wrist_to_effector* lz)
+    wz = pz - (dist_wrist_to_effector * lz)
 
     return wx, wy, wz
 
 
 def generate_rrpy_matrix(roll, pitch, yaw):
-    Rot_X = rotate_x(roll)
-    Rot_Y = rotate_y(pitch)
-    Rot_Z = rotate_z(yaw)
+    Rot_X = rotate_x(roll)[0:3, 0:3]
+    Rot_Y = rotate_y(pitch)[0:3, 0:3]
+    Rot_Z = rotate_z(yaw)[0:3, 0:3]
+
+    # Rot_X = rot_gamma(roll)[0:3, 0:3]
+    # Rot_Y = rot_beta(pitch)[0:3, 0:3]
+    # Rot_Z = rot_alpha(yaw)[0:3, 0:3]
 
     Rrpy = Rot_Z * Rot_Y * Rot_X
 
@@ -462,10 +524,10 @@ unadjusted_theta_2 = get_theta_2(alpha, beta).evalf()
 theta_2 = RADS_AT_REST_JOINT2 - unadjusted_theta_2
 theta2 = theta_2.evalf()
 
-print("theta1 ", theta1)
-print("expected theta1 ", correct_values["shelf_4"]["joint_1"])
-print("theta2 ", theta2)
-print("theta3 ", theta3)
+# print("theta1 ", theta1)
+# print("expected theta1 ", correct_values["shelf_4"]["joint_1"])
+# print("theta2 ", theta2)
+# print("theta3 ", theta3)
 
 R0_3 = T0_3[0:3, 0:3]
 
@@ -490,6 +552,6 @@ theta5 = -get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 # theta6 is simply the revers of theta4
 theta6 = -theta4
 
-print("theta4 ", theta4)
-print("theta5 ", theta5)
-print("theta6 ", theta6)
+# print("theta4 ", theta4)
+# print("theta5 ", theta5)
+# print("theta6 ", theta6)
