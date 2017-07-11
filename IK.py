@@ -78,6 +78,7 @@ def get_alpha(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_
         alpha_down = atan2(-sqrt(1 - (cos_alpha ** 2)), cos_alpha)
 
     return alpha_up
+    # return alpha
 
 
 def get_theta_2(alpha, beta):
@@ -180,9 +181,14 @@ def rot_alpha(rotation_matrix):
     r32 = rotation_matrix[2, 1]
     r33 = rotation_matrix[2, 2]
 
-    theta_x = atan2(r32, r33)
-    theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
-    theta_z = atan2(r21, r11)
+    # theta_x = atan2(r32, r33)
+    # theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+    # theta_z = atan2(r21, r11)
+
+    print("r21", r21)
+    print("r11", r11)
+
+    print(atan2)
 
     alpha_rotation = atan2(r21, r11)
 
@@ -221,6 +227,9 @@ def rot_gamma(rotation_matrix):
     r33 = rotation_matrix[2, 2]
 
     gamma_rotation = atan2(r32, r33)
+
+    theta4 = atan2(R3_6[2, 1], R3_6[2, 2])
+
 
     return gamma_rotation
 
@@ -529,29 +538,33 @@ theta2 = theta_2.evalf()
 # print("theta2 ", theta2)
 # print("theta3 ", theta3)
 
-R0_3 = T0_3[0:3, 0:3]
+R0_3 = simplify(T0_3[0:3, 0:3])
+R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# convert sympy matrix to numpy matrix to avoid errors
+# how to convert lifted from: https://stackoverflow.com/a/37491889
+R0_3 = np.array(R0_3).astype(np.float64)
 
-R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
-# R0_3_corr = (R0_3 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
-R0_3_corr = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+Rrpy = (generate_rrpy_matrix(roll, pitch, yaw) * rotate_y(pi / 2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3])
+R3_6 = (np.linalg.inv(R0_3)) * Rrpy
 
-R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+theta4 = atan2(R3_6[2, 2], -R3_6[0, 2])
+theta5 = acos(R3_6[1, 2])
+# correct solution for theta6
+theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
+# solution is near, but not as close
+# theta6b = atan2(-R3_6[2,2], R3_6[1,0])
 
-Rrpy_corr = Rrpy[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
+# if the value of theta4 is greater than or less than pi, then reverse the rotation of theta4
+# by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6
+if theta4 < -pi / 2:
+    theta4 = -(-pi - theta4)
+    theta5 = -theta5
+    theta6 = -(pi - theta6)
+elif theta4 > pi / 2:
+    theta4 = -(pi - theta4)
+    theta5 = -theta5
+    theta6 = -(-pi - theta6)
 
-R3_6 = R0_3.inv() * Rrpy_corr
-
-R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
-
-R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
-
-# Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
-# are the formulas that return the desired values base on the different permutations we have tried
-theta4 = get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-theta5 = -get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-# theta6 is simply the revers of theta4
-theta6 = -theta4
-
-# print("theta4 ", theta4)
-# print("theta5 ", theta5)
-# print("theta6 ", theta6)
+print("theta4 ", theta4)
+print("theta5 ", theta5)
+print("theta6 ", theta6)
