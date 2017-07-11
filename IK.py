@@ -263,8 +263,10 @@ px = given_values[SHELF]["px"]
 py = given_values[SHELF]["py"]
 pz = given_values[SHELF]["pz"]
 
+# create rotation matrix
 Rrpy = generate_rrpy_matrix(roll, pitch, yaw)
 
+# compute wrist values
 dist_wrist_to_effector = s[d7]
 d6_val = s[d6]
 
@@ -312,15 +314,19 @@ print("theta2          ", theta2)
 print("expected theta3 ", expected_theta3)
 print("theta3          ", theta3)
 
+# get the matrix for base link to joint 3, using computed theta1, 2, and 3 values
 R0_3 = T0_3[0:3, 0:3]
 R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 # convert sympy matrix to numpy matrix to avoid errors
 # how to convert lifted from: https://stackoverflow.com/a/37491889
 R0_3 = np.array(R0_3).astype(np.float64)
 
-Rrpy = (generate_rrpy_matrix(roll, pitch, yaw) * rotate_y(pi / 2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3])
+# correct the orientation of the Rrpy matrix
+Rrpy = Rrpy * rotate_y(pi / 2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3]
+# get the matrix values for the wrist
 R3_6 = (np.linalg.inv(R0_3)) * Rrpy
 
+# compute values for thetas 4, 5, and 6
 theta4 = atan2(R3_6[2, 2], -R3_6[0, 2])
 theta4 = theta4.evalf()
 theta5 = acos(R3_6[1, 2])
