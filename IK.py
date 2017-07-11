@@ -11,7 +11,7 @@ RADS_AT_REST_JOINT3 = 1.60678078687695
 RADS_AT_REST_JOINT2 = pi/2 # 1.57079632679490
 
 
-SHELF = "shelf_3"
+SHELF = "shelf_4"
 
 
 # Law of cosines
@@ -134,11 +134,13 @@ def get_wrist_coordinates(Rrpy, px, py, pz, dist_wrist_to_effector):
 
 
 def generate_rrpy_matrix(roll, pitch, yaw):
-    Rot_X = rotate_x(roll)[0:3, 0:3]
-    Rot_Y = rotate_y(pitch)[0:3, 0:3]
-    Rot_Z = rotate_z(yaw)[0:3, 0:3]
+    # compose rotation matrix
+    # procedure taken from http://nghiaho.com/?page_id=846
+    rot_x = rotate_x(roll)[0:3, 0:3]
+    rot_y = rotate_y(pitch)[0:3, 0:3]
+    rot_z = rotate_z(yaw)[0:3, 0:3]
 
-    Rrpy = Rot_Z * Rot_Y * Rot_X
+    Rrpy = rot_z * rot_y * rot_x
 
     return Rrpy
 
@@ -148,9 +150,9 @@ def get_roll(rotation_matrix):
     r32 = rotation_matrix[2, 1]
     r33 = rotation_matrix[2, 2]
 
-    roll = atan2(r32, r33)
+    roll_val = atan2(r32, r33)
 
-    return roll
+    return roll_val
 
 
 # pitch function for forward kinematics
@@ -159,9 +161,9 @@ def get_pitch(rotation_matrix):
     r32 = rotation_matrix[2, 1]
     r33 = rotation_matrix[2, 2]
 
-    pitch = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+    pitch_val = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
 
-    return pitch
+    return pitch_val
 
 
 # yaw function for forward kinematics
@@ -170,9 +172,9 @@ def get_yaw(rotation_matrix):
     r11 = rotation_matrix[0, 0]
     r21 = rotation_matrix[1, 0]
 
-    yaw = atan2(r21, r11)
+    yaw_val = atan2(r21, r11)
 
-    return yaw
+    return yaw_val
 
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
@@ -181,70 +183,65 @@ a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
 alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
 
 # DH Parameters
-s = {alpha0: 0, a0: 0, d1: 0.75,
-     alpha1: -pi / 2, a1: 0.35, d2: 0, q2: q2 - pi / 2,
-     alpha2: 0, a2: 1.25, d3: 0,
-     alpha3: -pi / 2, a3: -0.054, d4: 1.50,
-     alpha4: pi / 2, a4: 0, d5: 0,
-     alpha5: -pi / 2, a5: 0, d6: 0,
-     alpha6: 0, a6: 0, d7: 0.303, q7: 0
+s = {alpha0:        0,  a0:       0,  d1: 0.75,
+     alpha1:    -pi/2,  a1:    0.35,  d2:    0,    q2: q2 - pi/2,
+     alpha2:        0,  a2:    1.25,  d3:    0,
+     alpha3:    -pi/2,  a3:  -0.054,  d4: 1.50,
+     alpha4:     pi/2,  a4:       0,  d5:    0,
+     alpha5:    -pi/2,  a5:       0,  d6:    0,
+     alpha6:        0,  a6:       0,  d7:0.303,     q7: 0
      }
 
-print("computing homogeneous transforms")
-
 # Homogeneous transforms
-T0_1 = Matrix([[cos(q1), -sin(q1), 0, a0],
-               [sin(q1) * cos(alpha0), cos(q1) * cos(alpha0), -sin(alpha0), -sin(alpha0) * d1],
-               [sin(q1) * sin(alpha0), cos(q1) * sin(alpha0), cos(alpha0), cos(alpha0) * d1],
-               [0, 0, 0, 1]])
+T0_1 = Matrix([ [               cos(q1),              -sin(q1),            0,                a0],
+                [ sin(q1) * cos(alpha0), cos(q1) * cos(alpha0), -sin(alpha0), -sin(alpha0) * d1],
+                [ sin(q1) * sin(alpha0), cos(q1) * sin(alpha0),  cos(alpha0),  cos(alpha0) * d1],
+                [                     0,                     0,            0,                 1]])
 
 T0_1 = T0_1.subs(s)
 
-T1_2 = Matrix([[cos(q2), -sin(q2), 0, a1],
-               [sin(q2) * cos(alpha1), cos(q2) * cos(alpha1), -sin(alpha1), -sin(alpha1) * d2],
-               [sin(q2) * sin(alpha1), cos(q2) * sin(alpha1), cos(alpha1), cos(alpha1) * d2],
-               [0, 0, 0, 1]])
+T1_2 = Matrix([ [               cos(q2),              -sin(q2),            0,                a1],
+                [ sin(q2) * cos(alpha1), cos(q2) * cos(alpha1), -sin(alpha1), -sin(alpha1) * d2],
+                [ sin(q2) * sin(alpha1), cos(q2) * sin(alpha1),  cos(alpha1),  cos(alpha1) * d2],
+                [                     0,                     0,            0,                 1]])
 
 T1_2 = T1_2.subs(s)
 
-T2_3 = Matrix([[cos(q3), -sin(q3), 0, a2],
-               [sin(q3) * cos(alpha2), cos(q3) * cos(alpha2), -sin(alpha2), -sin(alpha2) * d3],
-               [sin(q3) * sin(alpha2), cos(q3) * sin(alpha2), cos(alpha2), cos(alpha2) * d3],
-               [0, 0, 0, 1]])
+T2_3 = Matrix([ [               cos(q3),              -sin(q3),            0,                a2],
+                [ sin(q3) * cos(alpha2), cos(q3) * cos(alpha2), -sin(alpha2), -sin(alpha2) * d3],
+                [ sin(q3) * sin(alpha2), cos(q3) * sin(alpha2),  cos(alpha2),  cos(alpha2) * d3],
+                [                     0,                     0,            0,                 1]])
 
 T2_3 = T2_3.subs(s)
 
-T3_4 = Matrix([[cos(q4), -sin(q4), 0, a3],
-               [sin(q4) * cos(alpha3), cos(q4) * cos(alpha3), -sin(alpha3), -sin(alpha3) * d4],
-               [sin(q4) * sin(alpha3), cos(q4) * sin(alpha3), cos(alpha3), cos(alpha3) * d4],
-               [0, 0, 0, 1]])
+T3_4 = Matrix([ [               cos(q4),              -sin(q4),            0,                a3],
+                [ sin(q4) * cos(alpha3), cos(q4) * cos(alpha3), -sin(alpha3), -sin(alpha3) * d4],
+                [ sin(q4) * sin(alpha3), cos(q4) * sin(alpha3),  cos(alpha3),  cos(alpha3) * d4],
+                [                     0,                     0,            0,                 1]])
 
 T3_4 = T3_4.subs(s)
 
-print("halfway through")
-
-T4_5 = Matrix([[cos(q5), -sin(q5), 0, a4],
-               [sin(q5) * cos(alpha4), cos(q5) * cos(alpha4), -sin(alpha4), -sin(alpha4) * d5],
-               [sin(q5) * sin(alpha4), cos(q5) * sin(alpha4), cos(alpha4), cos(alpha4) * d5],
-               [0, 0, 0, 1]])
+T4_5 = Matrix([ [               cos(q5),              -sin(q5),            0,                a4],
+                [ sin(q5) * cos(alpha4), cos(q5) * cos(alpha4), -sin(alpha4), -sin(alpha4) * d5],
+                [ sin(q5) * sin(alpha4), cos(q5) * sin(alpha4),  cos(alpha4),  cos(alpha4) * d5],
+                [                     0,                     0,            0,                 1]])
 
 T4_5 = T4_5.subs(s)
 
-T5_6 = Matrix([[cos(q6), -sin(q6), 0, a5],
-               [sin(q6) * cos(alpha5), cos(q6) * cos(alpha5), -sin(alpha5), -sin(alpha5) * d6],
-               [sin(q6) * sin(alpha5), cos(q6) * sin(alpha5), cos(alpha5), cos(alpha5) * d6],
-               [0, 0, 0, 1]])
+T5_6 = Matrix([ [               cos(q6),              -sin(q6),            0,                a5],
+                [ sin(q6) * cos(alpha5), cos(q6) * cos(alpha5), -sin(alpha5), -sin(alpha5) * d6],
+                [ sin(q6) * sin(alpha5), cos(q6) * sin(alpha5),  cos(alpha5),  cos(alpha5) * d6],
+                [                     0,                     0,            0,                 1]])
 
 T5_6 = T5_6.subs(s)
 
-T6_G = Matrix([[cos(q7), -sin(q7), 0, a6],
-               [sin(q7) * cos(alpha6), cos(q7) * cos(alpha6), -sin(alpha6), -sin(alpha6) * d7],
-               [sin(q7) * sin(alpha6), cos(q7) * sin(alpha6), cos(alpha6), cos(alpha6) * d7],
-               [0, 0, 0, 1]])
+
+T6_G = Matrix([ [               cos(q7),              -sin(q7),            0,                a6],
+                [ sin(q7) * cos(alpha6), cos(q7) * cos(alpha6), -sin(alpha6), -sin(alpha6) * d7],
+                [ sin(q7) * sin(alpha6), cos(q7) * sin(alpha6),  cos(alpha6),  cos(alpha6) * d7],
+                [                     0,                     0,            0,                 1]])
 
 T6_G = T6_G.subs(s)
-
-print("Done with individual matrices, proceeding to multiply")
 
 T0_2 = T0_1 * T1_2
 T0_3 = T0_2 * T2_3
@@ -254,11 +251,6 @@ T0_6 = T0_5 * T5_6
 T0_G = T0_6 * T6_G
 
 T_total = T0_G * rotate_z(pi) * rotate_y(-pi/2)
-
-
-# compose rotation matrix
-# procedure taken from http://nghiaho.com/?page_id=846
-
 
 # insert test cases and given data here the first objective is to produce Rrpy that is consistent with
 # the one in Gazebo we will first obtain the givens in gazebo, roll, pitch, yaw and position coords we will
