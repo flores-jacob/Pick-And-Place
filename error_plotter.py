@@ -27,8 +27,8 @@ error_data = {
 
 # save to disk
 error_list_path = "./error_list.json"
-with open(error_list_path, "w") as error_list_file:
-    json_error_list = json.dump(error_data, error_list_file)
+# with open(error_list_path, "w") as error_list_file:
+#     json_error_list = json.dump(error_data, error_list_file)
 
 # open error list from disk
 with open(error_list_path, "r") as error_list_file:
