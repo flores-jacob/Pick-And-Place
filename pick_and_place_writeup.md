@@ -40,8 +40,16 @@ Here is an example of how to include an image in your writeup.
 
 #### 2. Using the DH parameter table you derived earlier, create individual transformation matrices about each joint. In addition, also generate a generalized homogeneous transform between base_link and gripper_link using only end-effector(gripper) pose.
 
-i | alpha_{i-1} | a_{i-1} | d_i | theta_i
---- | --- | --- | --- | ---
+i   | alpha_{i-1} | a_{i-1} | d_i | theta_i
+--- | ---         | ---     | --- | ---
+1   | 0           | 0       | 0.75 |
+2   | -pi/2       | 0.35    | 0    | -pi/2
+3   | 0           | 1.25    | 0    |
+4   | -pi/2       | -0.054  | 1.50 | 
+5   | pi/2        | 0       | 0    |
+6   | -pi/2       | 0       | 0    |
+7   | 0           | 0       | 0.303| 0
+
 1 | `highlight` | **bold** | 7.41
 2 | a | b | c
 3 | *italic* | text | 403
