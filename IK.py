@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import array, ndarray
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
 from sympy.matrices import Matrix
 
@@ -143,6 +142,38 @@ def generate_rrpy_matrix(roll, pitch, yaw):
 
     return Rrpy
 
+
+# roll function for forward kinematics
+def get_roll(rotation_matrix):
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    roll = atan2(r32, r33)
+
+    return roll
+
+
+# pitch function for forward kinematics
+def get_pitch(rotation_matrix):
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    pitch = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+
+    return pitch
+
+
+# yaw function for forward kinematics
+def get_yaw(rotation_matrix):
+    # solution adapted from this page http://nghiaho.com/?page_id=846
+    r11 = rotation_matrix[0, 0]
+    r21 = rotation_matrix[1, 0]
+
+    yaw = atan2(r21, r11)
+
+    return yaw
+
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
@@ -217,6 +248,14 @@ print("Done with individual matrices, proceeding to multiply")
 
 T0_2 = T0_1 * T1_2
 T0_3 = T0_2 * T2_3
+T0_4 = T0_3 * T3_4
+T0_5 = T0_4 * T4_5
+T0_6 = T0_5 * T5_6
+T0_G = T0_6 * T6_G
+
+T_total = T0_G * rotate_z(pi) * rotate_y(-pi/2)
+
+
 # compose rotation matrix
 # procedure taken from http://nghiaho.com/?page_id=846
 
@@ -298,8 +337,8 @@ theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
 theta6 = theta6.evalf()
 
 # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta4
-# by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6
-# may be unecessary however
+# by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6.
+# This may be unecessary however.
 # if theta4 < -pi / 2:
 #     theta4 = -(-pi - theta4)
 #     theta5 = -theta5
@@ -319,3 +358,27 @@ print("expected theta5 ", expected_theta5)
 print("theta5          ", theta5)
 print("expected theta6 ", expected_theta6)
 print("theta6          ", theta6)
+
+print("T_total = ", T_total.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6}))
+
+forward_kinematics_matrix = T_total.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
+
+FK_px = forward_kinematics_matrix[0, 3]
+FK_py = forward_kinematics_matrix[1, 3]
+FK_pz = forward_kinematics_matrix[2, 3]
+print("expected px  ", given_values[SHELF]["px"])
+print("FK_px        ", FK_px)
+print("expected py  ", given_values[SHELF]["py"])
+print("FK_py        ", FK_py)
+print("expected pz  ", given_values[SHELF]["pz"])
+print("FK_pz        ", FK_pz)
+
+FK_roll = get_roll(forward_kinematics_matrix)
+FK_pitch = get_pitch(forward_kinematics_matrix)
+FK_yaw = get_yaw(forward_kinematics_matrix)
+print("expected roll    ", roll)
+print("FK_roll          ", FK_roll)
+print("expected pitch   ", pitch)
+print("FK_pitch         ", FK_pitch)
+print("expected yaw     ", yaw)
+print("FK_yaw           ", FK_yaw)
