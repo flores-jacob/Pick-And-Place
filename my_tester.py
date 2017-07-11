@@ -1,10 +1,13 @@
 import numpy as np
 from sympy import symbols, pi, simplify, sqrt, atan2, acos
 
-from IK import RADS_AT_REST_JOINT3
+from IK import RADS_AT_REST_JOINT3, RADS_AT_REST_JOINT2, get_roll, get_pitch, get_yaw
 from IK import generate_rrpy_matrix, get_wrist_coordinates, get_theta_3, get_alpha, get_beta, get_theta_2, \
-    RADS_AT_REST_JOINT2, T0_3, rotate_z, rotate_y
+     T0_3, rotate_z, rotate_y, T_total
 from sample_data import given_values, correct_values
+
+import os.path, json
+
 
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
@@ -22,6 +25,41 @@ s = {alpha0: 0, a0: 0, d1: 0.75,
      alpha5: -pi / 2, a5: 0, d6: 0,
      alpha6: 0, a6: 0, d7: 0.303, q7: 0
      }
+
+# open the saved error list, if file does not exist, create it
+# load the json from the error list
+# open error list from disk
+error_list_path = "./error_list.json"
+
+if os.path.isfile(error_list_path):
+    with open(error_list_path, "r") as error_list_file:
+        json_error_list = json.loads(error_list_file.read(), encoding='utf-8')
+        px_error_list = json_error_list["px"]
+        py_error_list = json_error_list["py"]
+        pz_error_list = json_error_list["pz"]
+        roll_error_list = json_error_list["roll"]
+        pitch_error_list = json_error_list["pitch"]
+        yaw_error_list = json_error_list["yaw"]
+else:
+    # if file does not exist, create an empty file and initialize lists
+    with open(error_list_path, "w") as error_list_file:
+        json_error_list = {
+            "px": [],
+            "py": [],
+            "pz": [],
+            "roll": [],
+            "pitch": [],
+            "yaw": []
+        }
+
+        px_error_list = json_error_list["px"]
+        py_error_list = json_error_list["py"]
+        pz_error_list = json_error_list["pz"]
+        roll_error_list = json_error_list["roll"]
+        pitch_error_list = json_error_list["pitch"]
+        yaw_error_list = json_error_list["yaw"]
+
+        json.dump(json_error_list, error_list_file)
 
 for shelf in given_values:
     print(shelf)
@@ -83,7 +121,7 @@ for shelf in given_values:
                                      z_offset_to_joint2)
 
     # choose the first of the two theta_3 results, which is the elbow up result
-    theta3 = unadjusted_theta_3[0].evalf() - RADS_AT_REST_JOINT3
+    theta3 = unadjusted_theta_3 - RADS_AT_REST_JOINT3
     expected_theta3 = correct_values[shelf]["joint_3"]
     # assert round(theta3, 2) == round(expected_theta3, 2), "theta3 mismatch"
 
@@ -132,14 +170,14 @@ for shelf in given_values:
 
     # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta4
     # by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6
-    if theta4 < -pi / 2:
-        theta4 = -(-pi - theta4)
-        theta5 = -theta5
-        theta6 = -(pi - theta6)
-    elif theta4 > pi / 2:
-        theta4 = -(pi - theta4)
-        theta5 = -theta5
-        theta6 = -(-pi - theta6)
+    # if theta4 < -pi / 2:
+    #     theta4 = -(-pi - theta4)
+    #     theta5 = -theta5
+    #     theta6 = -(pi - theta6)
+    # elif theta4 > pi / 2:
+    #     theta4 = -(pi - theta4)
+    #     theta5 = -theta5
+    #     theta6 = -(-pi - theta6)
 
     expected_theta4 = correct_values[shelf]["joint_4"]
     expected_theta5 = correct_values[shelf]["joint_5"]
@@ -153,3 +191,47 @@ for shelf in given_values:
 
     if round(theta6, 2) != round(expected_theta6, 2):
         print("theta6 mismatch", theta6, expected_theta6)
+
+    FK_matrix = T_total.evalf(
+        subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
+
+    FK_px = FK_matrix[0, 3]
+    FK_py = FK_matrix[1, 3]
+    FK_pz = FK_matrix[2, 3]
+    # print("expected px  ", given_values[shelf]["px"])
+    # print("FK_px        ", FK_px)
+    # print("expected py  ", given_values[shelf]["py"])
+    # print("FK_py        ", FK_py)
+    # print("expected pz  ", given_values[shelf]["pz"])
+    # print("FK_pz        ", FK_pz)
+
+    FK_roll = get_roll(FK_matrix)
+    FK_pitch = get_pitch(FK_matrix)
+    FK_yaw = get_yaw(FK_matrix)
+    # print("expected roll    ", roll)
+    # print("FK_roll          ", FK_roll)
+    # print("expected pitch   ", pitch)
+    # print("FK_pitch         ", FK_pitch)
+    # print("expected yaw     ", yaw)
+    # print("FK_yaw           ", FK_yaw)
+
+    # compute the error values for the px, py, pz and rpy
+    px_error = (px - FK_px) # ** 2
+    py_error = (py - FK_py) # ** 2
+    pz_error = (pz - FK_pz) #** 2
+
+    roll_error = (roll - FK_roll)  # ** 2
+    pitch_error = (pitch - FK_pitch)  #** 2
+    yaw_error = (yaw - FK_yaw) # ** 2
+
+    # append each of the error values to their respective lists
+    px_error_list.append(float(px_error))
+    py_error_list.append(float(py_error))
+    pz_error_list.append(float(pz_error))
+    roll_error_list.append(float(roll_error))
+    pitch_error_list.append(float(pitch_error))
+    yaw_error_list.append(float(yaw_error))
+
+# once all the operations have been done, append the new set of errors to disk
+with open(error_list_path, "w") as error_list_file:
+    json.dump(json_error_list, error_list_file, encoding='utf-8')
