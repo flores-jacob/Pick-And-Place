@@ -296,61 +296,52 @@ for shelf in given_values:
     # convert sympy matrix to numpy matrix to avoid errors
     # how to convert lifted from: https://stackoverflow.com/a/37491889
     R0_3 = np.array(R0_3).astype(np.float64)
-    # print(R0_3)
-    
-    
-    # R0_3 = np.asarray([
-    # [-0.260698963970002, 0.865063859865455, 0.428603043082581],
-    # [ 0.123671551293481, -0.41037289864258, 0.903492906148328],
-    # [ 0.957466133910559, 0.288545667814244,                 0]])
-    
-    # print("done", R0_3)
-    # use the given roll, pitch, and yaw, to create the 3x3 rotation matrix
-    # quaternion = [-0.00044805, -0.00011061, 0.00042956, 1]
-    # Rrpy = quarternion2rotation(quaternion) * rotate_z(pi)[0:3, 0:3] * rotate_y(-pi/2)[0:3, 0:3]
-    
+
     Rrpy = (generate_rrpy_matrix(roll, pitch, yaw) * rotate_y(pi/2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3])
     R3_6 = (inv(R0_3)) * Rrpy
-    # R3_6 = np.dot(inv(R0_3), Rrpy)
-    
-    # print(type(R0_3))
-    
-    # print ("R3_6", R3_6)
-    
-    # R3_6 = R0_3.inv() * Rrpy
-    # R3_6 = np.dot(R0_3.inv(), Rrpy)
-    
-    alpha = rot_alpha(R3_6)
-    beta = rot_beta(R3_6)
-    gamma = rot_gamma(R3_6)
-    
-    # z3 = (R3_6[1, 2])
-    # z2 = (R3_6[1, 1])
-    # z23 = R3_6[1, 2] * R3_6[1, 1]
-    
-    # y3 =  (R3_6[0, 2]) or (R3_6[2, 2])
     
     # theta4 = atan2(R3_6[2, 1], R3_6[2, 2])
-    # theta4 = atan2(R3_6[2,2], -R3_6[0,2])
-    theta4 = atan2(R3_6[2,2], 1-R3_6[0,2])
+    theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+    # theta4 = atan2(R3_6[2,2], 1-R3_6[0,2])
     theta5 = acos(R3_6[1, 2])
     # theta5 = atan2(-R3_6[2, 0], sqrt((R3_6[0, 0] * R3_6[0, 0]) + (R3_6[1, 0] * R3_6[1, 0])))
     # theta6c = atan2(R3_6[1, 0], R3_6[0, 0])
     # theta6c = atan2(R3_6[1,2], -R3_6[0,2])
 
     # correct solution for theta6
-    theta6a = atan2(-R3_6[1,1], R3_6[1,0])
-    theta6b = atan2(-R3_6[2,2], R3_6[1,0])
-    # theta6c = atan2(-R3_6[2,2], R3_6[1,0])
+    theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
+    # theta6b = atan2(-R3_6[2,2], R3_6[1,0])
 
+    # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta6
+    # by subtracting it from pi, and reversing the sign
+    theta_4_reversed = True
+    if theta4 < -pi/2:
+        theta4 = -(-pi - theta4)
+    elif theta4 > pi/2:
+        theta4 = -(pi - theta4)
+    else:
+        theta4 = theta4
+        theta_4_reversed = False
     # if the value of theta6 is greater than or less than pi, then reverse the rotation of theta6
     # by subtracting it from pi, and reversing the sign
-    if theta6a < -pi/2:
-        theta6c = -(-pi - theta6a)
-    elif theta6a > pi/2:
-        theta6c = -(pi - theta6a)
+    theta_6_reversed = True
+    if theta6 < -pi/2:
+        theta6 = -(-pi - theta6)
+    elif theta6 > pi/2:
+        theta6 = -(pi - theta6)
     else:
-        theta6c = theta6a
+        theta6 = theta6
+        theta_6_reversed = False
+
+    if theta_4_reversed and theta_6_reversed:
+        theta5 = -theta5
+        print"both reversed"
+    elif (not theta_4_reversed) and theta_6_reversed:
+        print("theta 6 reversed")
+    elif (not theta_6_reversed) and theta_4_reversed:
+        print("theta 4 reversed")
+    else:
+        print("neither reversed")
 
     # theta6c = acos(R3_6[1, 1]/sqrt(1 - (R3_6[1, 2] * R3_6[1, 1])))
     # theta6c = acos(R3_6[2, 2]/sqrt(1 - (R3_6[1, 2] * R3_6[1, 1])))
@@ -368,9 +359,9 @@ for shelf in given_values:
     print("computed theta5 ", theta5.evalf())
     # print("computed beta   ", beta.evalf())
     print("expected theta6 ", expected_theta6)
-    print("computed theta6c", theta6c.evalf())
-    print("computed theta6a", theta6a.evalf())
-    print("computed theta6b", theta6b.evalf())
+    print("computed theta6", theta6.evalf())
+    # print("computed theta6a", theta6.evalf())
+    # print("computed theta6b", theta6b.evalf())
     # print("computed alpha  ", alpha.evalf())
     # print("from tf.transformations.euler_from_matrix(R3_6, 'rxyz')", ('euler', (-1.11150793018901, -0.2633602699462658, 0.12890453467065144))
     # )
