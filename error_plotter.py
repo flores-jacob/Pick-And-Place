@@ -1,11 +1,11 @@
-import numpy as np
 import json
-
 import numpy as np
+from plotly.graph_objs import Box
+from plotly.offline import plot
 
 # from IK import T_total
 
-# compute the FK, the compute the errors
+# compute the FK, then compute the errors
 # FK_matrix = T_total.evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4: theta4, q5: theta5, q6: theta6})
 
 # how to jsonify numpy arrays https://stackoverflow.com/a/32850511
@@ -44,13 +44,9 @@ theta4_list = json_error_list["theta4"]
 theta5_list = json_error_list["theta5"]
 theta6_list = json_error_list["theta6"]
 
+
+# prepare the data for the box plot for plotly to plot
 # box plot taken here https://plot.ly/python/box-plots/
-
-
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
-from plotly.graph_objs import Scatter, Figure, Layout, Box
-
-
 theta1_errors = Box(x=1,
     y=theta1_list,
     name='theta1'
