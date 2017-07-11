@@ -1,9 +1,39 @@
 from sample_data import given_values, correct_values
 from IK import generate_rrpy_matrix, get_wrist_coordinates, get_theta_3, get_alpha, get_beta, get_theta_2, \
-    RADS_AT_REST_JOINT2, T0_3, R_corr_3_and_5, R_corr_4_6_and_gripper, rotate_x, rotate_z, rotate_y, get_pitch, get_roll
+    RADS_AT_REST_JOINT2, T0_3, R_corr_3_and_5, R_corr_4_6_and_gripper, rotate_x, rotate_z, rotate_y, get_pitch, \
+    get_roll, rot_beta, rot_gamma, get_yaw, R_z, R_y
 from IK import RADS_AT_REST_JOINT3
 
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
+from sympy.matrices import Matrix
+
+
+def rot_alpha(rotation_matrix):
+    print("rot matrix ", type(rotation_matrix))
+    r11 = rotation_matrix[0, 0]
+    r12 = rotation_matrix[0, 1]
+    r13 = rotation_matrix[0, 2]
+
+    r21 = rotation_matrix[1, 0]
+    r22 = rotation_matrix[1, 1]
+    r23 = rotation_matrix[1, 2]
+
+    r31 = rotation_matrix[2, 0]
+    r32 = rotation_matrix[2, 1]
+    r33 = rotation_matrix[2, 2]
+
+    # theta_x = atan2(r32, r33)
+    # theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
+    # theta_z = atan2(r21, r11)
+
+    print("r21", r21)
+    print("r11", r11)
+
+    print("r21 type", type(r21))
+
+    alpha_rotation = atan2(-0.000778280282553234, 0.288202526912262)
+
+    return alpha_rotation
 
 # create symbols for variables
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
@@ -53,8 +83,8 @@ for shelf in given_values:
     if round(wz, 1) != round(expected_wz, 1):
         print(str(shelf) + ' wz mismatch ', wz, expected_wz)
 
-    # once we're done checking if we have sane wrist values, we recompute to use .197 for theta computation
-    dist_wrist_to_effector = 0.303
+    # once we're done checking if we have sane wrist values, we recompute to use .193 for theta computation
+    # dist_wrist_to_effector = 0.193
     wx, wy, wz = get_wrist_coordinates(Rrpy, px, py, pz, dist_wrist_to_effector)
 
     # compute theta for joint 1
@@ -106,36 +136,122 @@ for shelf in given_values:
         print("theta2 mismatch", theta2, expected_theta2)
 
     # TODO find the correct rotation that will allow us to get accurate measurements for thetas 4,5,6
-    # R0_3 = T0_3[0:3, 0:3]
-    # R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
-    # # R0_3_corr = (R0_3 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
-    # R0_3_corr = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-    # R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-    #
-    # Rrpy_corr = Rrpy[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
-    # R3_6 = R0_3.inv() * Rrpy_corr
-    #
-    # # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
-    # # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
-    #
-    #
-    #
-    #
-    # R3_6 = (R3_6 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
-    #
+    R0_3 = T0_3[0:3, 0:3]
+    R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
+    # R0_3_corr = (R0_3 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    R0_3_corr = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+
+    Rrpy_corr = Rrpy[0:3, 0:3] # * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
+    R3_6 = R0_3.inv() * Rrpy_corr
+
+    # shelf 9 default matrix
+    generated_matrix = Matrix([[9.99999684e-01,   6.38989417e-04, - 4.71983655e-04,   0.00000000e+00],
+     [-6.39290252e-04,   9.99999592e-01, - 6.37509068e-04,   0.00000000e+00],
+    [4.71576101e-04,   6.37810601e-04,    9.99999685e-01,    0.00000000e+00],
+    [0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+
+    # shelf 9 ryzy matrix
+    # generated_matrix = Matrix([[9.99999889e-01,   4.71576005e-04, - 1.47957988e-06,   0.00000000e+00],
+    #  [-4.71576004e-04,   9.99999889e-01,   3.01474038e-07,   0.00000000e+00],
+    # [1.47972188e-06, - 3.00776270e-07,    1.00000000e+00,    0.00000000e+00],
+    # [0.00000000e+00,   0.00000000e+00,   0.00000000e+00,   1.00000000e+00]])
+
+    R3_6_gen = R0_3.inv() * generated_matrix[0:3, 0:3]
+
+
+    # Rrpy_corr = R3_6 * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
+
+    # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
     # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+
+    R3_6_gen = (R3_6_gen * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # R3_6_gen = (R3_6_gen * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+
+
+    # R3_6 = R3_6 * R_z[0:3, 0:3]
+    # R3_6 = R3_6 * R_y[0:3, 0:3]
+
     #
-    # # Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
-    # # are the formulas that return the desired values base on the different permutations we have tried
-    # theta4 = get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-    # theta5 = -get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-    # # theta6 is simply the reverse of theta4
+    # rotational_beta = rot_beta(R3_6)
+    # rotational_gamma = rot_gamma(R3_6)
+    #
+    # computed_roll = get_roll(R3_6)
+    # computed_pitch = get_pitch(R3_6)
+    # computed_yaw = get_yaw(R3_6)
+    #
+    # #
+    # print("rotational beta",rotational_beta.evalf())
+    # print("rotational gamma",rotational_gamma.evalf())
+    #
+    # print("computed_roll", computed_roll.evalf())
+    # print("computed_pitch", computed_pitch.evalf())
+    # print("computed_yaw", computed_yaw.evalf())
+
+    # theta5 = rotational_alpha
+    # theta4 = -rotational_beta
+    #
+    # #
+    # # # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # # # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # #
+    # #
+    # #
+    # #
+    # # R3_6 = (R3_6 * rotate_x(-pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # #
+    # # R3_6_corr = (R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]
+    # #
+    # # # Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
+    # # # are the formulas that return the desired values base on the different permutations we have tried
+    # # theta4 = get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # # theta5 = -get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # # # theta6 is simply the reverse of theta4
+    # # theta6 = -theta4
+    # #
+    expected_theta4 = correct_values[shelf]["joint_4"]
+    expected_theta5 = correct_values[shelf]["joint_5"]
+    expected_theta6 = correct_values[shelf]["joint_6"]
+
+    theta5 = atan2(-R3_6[2, 0], sqrt((R3_6[0, 0] * R3_6[0, 0]) + (R3_6[1, 0] * R3_6[1, 0])))
+    theta4 = atan2(R3_6[2, 1], R3_6[2, 2])
+    theta6 = atan2(R3_6[1, 0], R3_6[0, 0])
+
+    theta5_gen = atan2(-R3_6_gen[2, 0], sqrt((R3_6_gen[0, 0] * R3_6_gen[0, 0]) + (R3_6_gen[1, 0] * R3_6_gen[1, 0])))
+    theta4_gen = atan2(R3_6_gen[2, 1], R3_6_gen[2, 2])
+    theta6_gen = atan2(R3_6_gen[1, 0], R3_6_gen[0, 0])
+
+    # rot alpha
+
+    # rotational_alpha = rot_alpha(R3_6)
+    # print("type", type(R3_6))
+    # print("rotational alpha", rotational_alpha)
+
+
+    # theta4 = -get_pitch(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # theta5 = get_roll(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # # theta6 is simply the revers of theta4
     # theta6 = -theta4
-    #
-    # expected_theta4 = correct_values[shelf]["joint_4"]
-    # expected_theta5 = correct_values[shelf]["joint_5"]
-    #
-    # print("expected theta4 ", expected_theta4)
-    # print("theta4          ", theta4)
-    # print("expected theta5 ", expected_theta5)
-    # print("theta5          ", theta5)
+
+    theta4 = get_roll(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    theta5 = get_pitch(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+    # theta6 is simply the revers of theta4
+    theta6 = get_yaw(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+
+    # print out the expected and the computed values
+    print("expected theta4 ", expected_theta4)
+    print("theta4          ", theta4.evalf())
+    print("theta4 gen      ", theta4_gen.evalf())
+    print('\n')
+    print("expected theta5 ", expected_theta5)
+    print("theta5          ", theta5.evalf())
+    print("theta5 gen      ", theta5_gen.evalf())
+    print('\n')
+    print("expected theta6 ", expected_theta6)
+    print("theta6          ", theta6.evalf())
+    print("theta6 gen      ", theta6_gen.evalf())
+    # print("rot_alpha", rotational_alpha)
+
+    print(Rrpy_corr)
+    print(generated_matrix)[0:3, 0:3]
