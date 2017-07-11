@@ -310,61 +310,32 @@ for shelf in given_values:
 
     # correct solution for theta6
     theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
+    # solution is near, but not as close
     # theta6b = atan2(-R3_6[2,2], R3_6[1,0])
 
-    # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta6
-    # by subtracting it from pi, and reversing the sign
-    theta_4_reversed = True
+    # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta4
+    # by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6
     if theta4 < -pi/2:
         theta4 = -(-pi - theta4)
+        theta5 = -theta5
+        theta6 = -(pi - theta6)
     elif theta4 > pi/2:
         theta4 = -(pi - theta4)
-    else:
-        theta4 = theta4
-        theta_4_reversed = False
-    # if the value of theta6 is greater than or less than pi, then reverse the rotation of theta6
-    # by subtracting it from pi, and reversing the sign
-    theta_6_reversed = True
-    if theta6 < -pi/2:
-        theta6 = -(-pi - theta6)
-    elif theta6 > pi/2:
-        theta6 = -(pi - theta6)
-    else:
-        theta6 = theta6
-        theta_6_reversed = False
-
-    if theta_4_reversed and theta_6_reversed:
         theta5 = -theta5
-        print"both reversed"
-    elif (not theta_4_reversed) and theta_6_reversed:
-        print("theta 6 reversed")
-    elif (not theta_6_reversed) and theta_4_reversed:
-        print("theta 4 reversed")
-    else:
-        print("neither reversed")
+        theta6 = -(-pi - theta6)
 
-    # theta6c = acos(R3_6[1, 1]/sqrt(1 - (R3_6[1, 2] * R3_6[1, 1])))
-    # theta6c = acos(R3_6[2, 2]/sqrt(1 - (R3_6[1, 2] * R3_6[1, 1])))
-    #
-    # theta6 = -asin(sqrt(1 - (R3_6[1, 1] * R3_6[1, 2])))
-    
     expected_theta4 = correct_values[shelf]["joint_4"]
     expected_theta5 = correct_values[shelf]["joint_5"]
     expected_theta6 = correct_values[shelf]["joint_6"]
     
     print("expected theta4 ", expected_theta4)
     print("computed theta4 ", theta4.evalf())
-    # print("computed gamma  ", gamma.evalf())
     print("expected theta5 ", expected_theta5)
     print("computed theta5 ", theta5.evalf())
-    # print("computed beta   ", beta.evalf())
     print("expected theta6 ", expected_theta6)
     print("computed theta6", theta6.evalf())
-    # print("computed theta6a", theta6.evalf())
-    # print("computed theta6b", theta6b.evalf())
-    # print("computed alpha  ", alpha.evalf())
-    # print("from tf.transformations.euler_from_matrix(R3_6, 'rxyz')", ('euler', (-1.11150793018901, -0.2633602699462658, 0.12890453467065144))
-    # )
+
+    # function I used to permute through
     # for i in range(3):
     #     for j in range(3):
     #         for k in range(3):
@@ -374,13 +345,3 @@ for shelf in given_values:
     #                 if abs(round(mytheta, 1)) == abs(round(expected_theta6, 1)):
     #                     print mytheta
     #                     print(i, j, k, l, "\n")
-    
-    # theta = math.acos(((R3_6[0, 0] + R3_6[1, 1] + R3_6[2, 2]) - 1) / 2)
-    # multi = 1 / (2 * math.sin(theta))
-    #
-    # rx = multi * (R3_6[2, 1] - R3_6[1, 2]) * theta
-    # ry = multi * (R3_6[0, 2] - R3_6[2, 0]) * theta
-    # rz = multi * (R3_6[1, 0] - R3_6[0, 1]) * theta
-    #
-    # print rx, ry, rz
-
