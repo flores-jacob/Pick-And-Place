@@ -46,9 +46,6 @@ def get_theta_3(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_
         mod_cos_theta = cos_theta - 1
         theta_3_elbow_up = atan2(+sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
         theta_3_elbow_down = atan2(-sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
-    elif cos_theta < 0:
-        theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
-        theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
     else:
         theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
         theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
@@ -62,6 +59,7 @@ def get_theta_3(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_
 
 
 def get_beta(wx, wz, q1, a1=0, d1=0):
+    # beta meaning beta angle for the computation of theta2, not beta for rpy
     x_dist_from_joint2 = (wx / cos(q1)) - a1
     z_dist_from_joint2 = wz - d1
 
@@ -71,6 +69,7 @@ def get_beta(wx, wz, q1, a1=0, d1=0):
 
 
 def get_alpha(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_z_offset=0):
+    # alpha meaning alpha angle for computation of theta2, not alpha for rpy
     x_dist_from_joint2 = (wx / cos(q1)) - joint_2_x_offset
     z_dist_from_joint2 = wz - joint_2_z_offset
 
@@ -86,9 +85,6 @@ def get_alpha(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_
         mod_cos_alpha = cos_alpha - 1
         alpha_up = atan2(+sqrt(1 - (mod_cos_alpha ** 2)), mod_cos_alpha) - (pi / 2)
         alpha_down = atan2(-sqrt(1 - (mod_cos_alpha ** 2)), mod_cos_alpha) - (pi / 2)
-    elif cos_alpha < 0:
-        alpha_up = atan2(+sqrt(1 - (cos_alpha ** 2)), cos_alpha)
-        alpha_down = atan2(-sqrt(1 - (cos_alpha ** 2)), cos_alpha)
     else:
         alpha_up = atan2(+sqrt(1 - (cos_alpha ** 2)), cos_alpha)
         alpha_down = atan2(-sqrt(1 - (cos_alpha ** 2)), cos_alpha)
@@ -193,13 +189,15 @@ def get_yaw(rotation_matrix):
     return yaw_val
 
 
-# create symbols for variables
+# Define DH param symbols
+# Joint angle symbols
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
+# Modified DH params
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
 a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
 alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
 
-# DH Parameters
+# Define Modified DH Transformation matrix
 s = {alpha0:        0,  a0:       0,  d1: 0.75,
      alpha1:    -pi/2,  a1:    0.35,  d2:    0,    q2: q2 - pi/2,
      alpha2:        0,  a2:    1.25,  d3:    0,
@@ -209,7 +207,7 @@ s = {alpha0:        0,  a0:       0,  d1: 0.75,
      alpha6:        0,  a6:       0,  d7:0.303,     q7: 0
      }
 
-# Homogeneous transforms
+# Create individual transformation matrices
 T0_1 = Matrix([ [               cos(q1),              -sin(q1),            0,                a0],
                 [ sin(q1) * cos(alpha0), cos(q1) * cos(alpha0), -sin(alpha0), -sin(alpha0) * d1],
                 [ sin(q1) * sin(alpha0), cos(q1) * sin(alpha0),  cos(alpha0),  cos(alpha0) * d1],
@@ -260,6 +258,7 @@ T6_G = Matrix([ [               cos(q7),              -sin(q7),            0,   
 
 T6_G = T6_G.subs(s)
 
+# get Homegenous matrix for gripper
 T0_2 = T0_1 * T1_2
 T0_3 = T0_2 * T2_3
 T0_4 = T0_3 * T3_4
@@ -267,6 +266,7 @@ T0_5 = T0_4 * T4_5
 T0_6 = T0_5 * T5_6
 T0_G = T0_6 * T6_G
 
+# correct gripper orientation
 T_total = T0_G * rotate_z(pi) * rotate_y(-pi/2)
 
 
@@ -323,29 +323,9 @@ def handle_calculate_IK(req):
             # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
 
-            # Define DH param symbols
-
-
-
-            # Joint angle symbols
-
-
-
-            # Modified DH params
-
-
-
-            # Define Modified DH Transformation matrix
-
-
-
-            # Create individual transformation matrices
-
-
-
             # Extract end-effector position and orientation from request
-	        # px,py,pz = end-effector position
-	        # roll, pitch, yaw = end-effector orientation
+            # px,py,pz = end-effector position
+            # roll, pitch, yaw = end-effector orientation
             px = req.poses[x].position.x
             py = req.poses[x].position.y
             pz = req.poses[x].position.z
@@ -443,8 +423,6 @@ def handle_calculate_IK(req):
             roll_error_list.append(float(roll_error))
             pitch_error_list.append(float(pitch_error))
             yaw_error_list.append(float(yaw_error))
-
-
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
