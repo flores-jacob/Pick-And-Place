@@ -15,14 +15,14 @@ SHELF = "shelf_9"
 
 
 # Law of cosines
-def get_theta_3(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_z_offset=0):
+def get_theta_3(len_link2_3, dist_joint3to5, wx, wz, q1, joint_2_x_offset=0, joint_2_z_offset=0):
     # TODO enable arm to bend backwards
     # This solution was adapted from: https://www.youtube.com/watch?v=llUBbpWVPQE time at 4:49
     x_dist_from_joint2 = (wx / cos(q1)) - joint_2_x_offset
     z_dist_from_joint2 = wz - joint_2_z_offset
 
-    numerator = (x_dist_from_joint2 ** 2) + (z_dist_from_joint2 ** 2) - (len_link2_3 ** 2) - (len_link3_5 ** 2)
-    denominator = (2 * len_link2_3 * len_link3_5)
+    numerator = (x_dist_from_joint2 ** 2) + (z_dist_from_joint2 ** 2) - (len_link2_3 ** 2) - (dist_joint3to5 ** 2)
+    denominator = (2 * len_link2_3 * dist_joint3to5)
 
     cos_theta = numerator / denominator
 
