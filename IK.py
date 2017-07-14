@@ -11,7 +11,7 @@ RADS_AT_REST_JOINT3 = 1.60678078687695
 RADS_AT_REST_JOINT2 = pi/2 # 1.57079632679490
 
 
-SHELF = "shelf_4"
+SHELF = "shelf_9"
 
 
 # Law of cosines
@@ -30,9 +30,6 @@ def get_theta_3(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_
         mod_cos_theta = cos_theta - 1
         theta_3_elbow_up = atan2(+sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
         theta_3_elbow_down = atan2(-sqrt(1 - (mod_cos_theta ** 2)), mod_cos_theta) - (pi / 2)
-    elif cos_theta < 0:
-        theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
-        theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
     else:
         theta_3_elbow_up = atan2(+sqrt(1 - (cos_theta ** 2)), cos_theta)
         theta_3_elbow_down = atan2(-sqrt(1 - (cos_theta ** 2)), cos_theta)
@@ -70,9 +67,6 @@ def get_alpha(len_link2_3, len_link3_5, wx, wz, q1, joint_2_x_offset=0, joint_2_
         mod_cos_alpha = cos_alpha - 1
         alpha_up = atan2(+sqrt(1 - (mod_cos_alpha ** 2)), mod_cos_alpha) - (pi / 2)
         alpha_down = atan2(-sqrt(1 - (mod_cos_alpha ** 2)), mod_cos_alpha) - (pi / 2)
-    elif cos_alpha < 0:
-        alpha_up = atan2(+sqrt(1 - (cos_alpha ** 2)), cos_alpha)
-        alpha_down = atan2(-sqrt(1 - (cos_alpha ** 2)), cos_alpha)
     else:
         alpha_up = atan2(+sqrt(1 - (cos_alpha ** 2)), cos_alpha)
         alpha_down = atan2(-sqrt(1 - (cos_alpha ** 2)), cos_alpha)
@@ -321,7 +315,7 @@ R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 # how to convert lifted from: https://stackoverflow.com/a/37491889
 R0_3 = np.array(R0_3).astype(np.float64)
 
-# correct the orientation of the Rrpy matrix
+# correct the orientation of the Rrpy matrix, make its axes align with the DH axes of the gripper
 Rrpy = Rrpy * rotate_y(pi / 2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3]
 # get the matrix values for the wrist
 R3_6 = (np.linalg.inv(R0_3)) * Rrpy
