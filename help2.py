@@ -333,7 +333,7 @@ for shelf in given_values:
     print("expected theta5 ", expected_theta5)
     print("computed theta5 ", theta5.evalf())
     print("expected theta6 ", expected_theta6)
-    print("computed theta6", theta6.evalf())
+    print("computed theta6 ", theta6.evalf())
 
     # function I used to permute through
     # for i in range(3):
@@ -345,3 +345,5 @@ for shelf in given_values:
     #                 if abs(round(mytheta, 1)) == abs(round(expected_theta6, 1)):
     #                     print mytheta
     #                     print(i, j, k, l, "\n")
+
+

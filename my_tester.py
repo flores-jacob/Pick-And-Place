@@ -26,7 +26,7 @@ s = {alpha0: 0, a0: 0, d1: 0.75,
      alpha6: 0, a6: 0, d7: 0.303, q7: 0
      }
 
-# open the saved error list, if file does not exist, create it
+# open the saved error list. if file does not exist, create it
 # load the json from the error list
 # open error list from disk
 error_list_path = "./error_list.json"
@@ -162,22 +162,28 @@ for shelf in given_values:
     R3_6 = (np.linalg.inv(R0_3)) * Rrpy
 
     theta4 = atan2(R3_6[2, 2], -R3_6[0, 2])
+    theta4 = theta4.evalf()
     theta5 = acos(R3_6[1, 2])
+    # theta5 = atan2(R3_6[1, 2], sqrt((R3_6[1, 1] * R3_6[1, 1]) + (R3_6[1, 0] * R3_6[1, 0] )))
+    # theta5 = atan2(R3_6[1, 2], sqrt((R3_6[0, 2] * R3_6[0, 2]) + (R3_6[2, 2] * R3_6[2, 2] )))
+    theta5 = theta5.evalf()
     # correct solution for theta6
     theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
+    theta6 = theta6.evalf()
+
     # solution is near, but not as close
     # theta6b = atan2(-R3_6[2,2], R3_6[1,0])
 
     # if the value of theta4 is greater than or less than pi, then reverse the rotation of theta4
     # by subtracting it from pi, and reversing the sign. Also reverse the rotations of theta5 and 6
-    # if theta4 < -pi / 2:
-    #     theta4 = -(-pi - theta4)
-    #     theta5 = -theta5
-    #     theta6 = -(pi - theta6)
-    # elif theta4 > pi / 2:
-    #     theta4 = -(pi - theta4)
-    #     theta5 = -theta5
-    #     theta6 = -(-pi - theta6)
+    if theta4 < -pi / 2:
+        theta4 = -(-pi - theta4)
+        theta5 = -theta5
+        theta6 = -(pi - theta6)
+    elif theta4 > pi / 2:
+        theta4 = -(pi - theta4)
+        theta5 = -theta5
+        theta6 = -(-pi - theta6)
 
     expected_theta4 = correct_values[shelf]["joint_4"]
     expected_theta5 = correct_values[shelf]["joint_5"]

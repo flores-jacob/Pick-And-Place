@@ -3,7 +3,9 @@ import random
 import numpy as np
 from numpy import array
 from sympy import symbols, cos, sin, pi, simplify, sqrt, atan2, acos
-from sympy.matrices import Matrix
+from sympy.matrices import Matrix, Transpose
+
+from sample_data import correct_values
 
 # These are the rads of joint 3 in resting position
 # RADS_AT_REST_JOINT3 = 1.60509488746813
@@ -108,6 +110,11 @@ def get_rpy(rotation_matrix):
     theta_x = atan2(r32, r33)
     theta_y = atan2(-r31, sqrt((r32 ** 2) + (r33 ** 2)))
     theta_z = atan2(r21, r11)
+
+
+    # theta5 = atan2(-R3_6[2, 0], sqrt((R3_6[0, 0] * R3_6[0, 0]) + (R3_6[1, 0] * R3_6[1, 0])))
+    # theta4 = atan2(R3_6[2, 1], R3_6[2, 2])
+    # theta6 = atan2(R3_6[1, 0], R3_6[0, 0])
 
     return (theta_x, theta_y, theta_z)
 
@@ -218,8 +225,6 @@ T3_4 = Matrix([ [               cos(q4),              -sin(q4),            0,   
 
 T3_4 = T3_4.subs(s)
 
-print("halfway through")
-
 T4_5 = Matrix([ [               cos(q5),              -sin(q5),            0,                a4],
                 [ sin(q5) * cos(alpha4), cos(q5) * cos(alpha4), -sin(alpha4), -sin(alpha4) * d5],
                 [ sin(q5) * sin(alpha4), cos(q5) * sin(alpha4),  cos(alpha4),  cos(alpha4) * d5],
@@ -234,7 +239,6 @@ T5_6 = Matrix([ [               cos(q6),              -sin(q6),            0,   
 
 T5_6 = T5_6.subs(s)
 
-
 T6_G = Matrix([ [               cos(q7),              -sin(q7),            0,                a6],
                 [ sin(q7) * cos(alpha6), cos(q7) * cos(alpha6), -sin(alpha6), -sin(alpha6) * d7],
                 [ sin(q7) * sin(alpha6), cos(q7) * sin(alpha6),  cos(alpha6),  cos(alpha6) * d7],
@@ -244,19 +248,19 @@ T6_G = T6_G.subs(s)
 
 print("Done with individual matrices, proceeding to multiply")
 
-# T0_2 = simplify(T0_1 * T1_2)
-# T0_3 = simplify(T0_2 * T2_3)
-# T0_4 = simplify(T0_3 * T3_4)
-# T0_5 = simplify(T0_4 * T4_5)
-# T0_6 = simplify(T0_5 * T5_6)
-# T0_G = simplify(T0_6 * T6_G)
+T0_2 = simplify(T0_1 * T1_2)
+T0_3 = simplify(T0_2 * T2_3)
+T0_4 = simplify(T0_3 * T3_4)
+T0_5 = simplify(T0_4 * T4_5)
+T0_6 = simplify(T0_5 * T5_6)
+T0_G = simplify(T0_6 * T6_G)
 
-T0_2 = T0_1 * T1_2
-T0_3 = T0_2 * T2_3
-T0_4 = T0_3 * T3_4
-T0_5 = T0_4 * T4_5
-T0_6 = T0_5 * T5_6
-T0_G = T0_6 * T6_G
+# T0_2 = T0_1 * T1_2
+# T0_3 = T0_2 * T2_3
+# T0_4 = T0_3 * T3_4
+# T0_5 = T0_4 * T4_5
+# T0_6 = T0_5 * T5_6
+# T0_G = T0_6 * T6_G
 
 # Gripper link  orientation correction so that URDF values are in accordance with DH Convention
 
@@ -309,26 +313,38 @@ R_corr_3_and_5 = R_z90 * R_x
 # q1_val = .8
 # q2_val = -.1
 # q3_val = .25
-# q1_val = 0.5
-# q2_val = -.2
-# q3_val = .33
+q1_val = 0
+q2_val = 0
+q3_val = 0
 # q4_val = 0.0
-# q4_val = 0.0
-# q5_val = 0
-# q6_val = 0.0
+q4_val = 0.0
+q5_val = 0
+q6_val = 0.0
 # q1_val = .4
 # q2_val = -.8
 # q3_val = -.11
 # q4_val = -1.56
 # q5_val = 1.9
 # q6_val = 0
-q1_val = 0.4431106733822272
-q2_val = 0.24109151255939043
-q3_val = -0.019039282352903975
-q4_val = 1.1356308927170824
-q5_val = -0.493364849487004
-q6_val = -1.1356308927170824
+# q1_val = 0.4431106733822272
+# q2_val = 0.24109151255939043
+# q3_val = -0.019039282352903975
+# q4_val = 1.1356308927170824
+# q5_val = -0.493364849487004
+# q6_val = -1.1356308927170824
+q1_val = -0.44293154231873455
+q2_val =  0.5386775324322572
+q3_val =  0.16542712045273245
+q4_val =  -0.6314924490169878
+# q5_val =  -0.8115364743375029
+q6_val =  0.46657506948980654
 
+# q1_val = correct_values["shelf_3"]["joint_1"]
+# q2_val =  correct_values["shelf_3"]["joint_2"]
+# q3_val = correct_values["shelf_3"]["joint_3"]
+# q4_val =  correct_values["shelf_3"]["joint_4"]
+# q5_val =  correct_values["shelf_3"]["joint_5"]
+# q6_val =  correct_values["shelf_3"]["joint_6"]
 
 print("T0_1 = ", T0_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 print("T0_2 = ", T0_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
@@ -343,19 +359,9 @@ T_total = T0_G * R_corr_4_6_and_gripper
 
 print("T_total = ", T_total.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
-# T_total = array([[9.99999848e-01, 5.47482962e-04, -5.93986389e-05,
-#                   0.00000000e+00],
-#                  [-5.47458560e-04, 9.99999766e-01, 4.10063924e-04,
-#                   0.00000000e+00],
-#                  [5.96231280e-05, -4.10031344e-04, 9.99999914e-01,
-#                   0.00000000e+00],
-#                  [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
-#                   1.00000000e+00]])
-
-
 Rrpy = T_total.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val})
 
-print(Rrpy)
+# print(Rrpy)
 
 # px = T_total[0, 3]
 # py = T_total[1, 3]
@@ -389,6 +395,11 @@ d6_val = s[d6]
 wx = px - ((d6_val + dist_wrist_to_effector) * lx)
 wy = py - ((d6_val + dist_wrist_to_effector) * ly)
 wz = pz - ((d6_val + dist_wrist_to_effector) * lz)
+
+
+# wx = px - (.193 * lx)
+# wy = py - (.193 * ly)
+# wz = pz - (.193 * lz)
 
 # get wirst coordinate values
 # wx = wx.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val})
@@ -451,12 +462,12 @@ theta2 = theta_2.evalf()
 # print("theta_2 ", theta_2)
 # print("theta_3 ", adjusted_theta_3)
 
-print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-print("theta_3 ", theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
-
-print("unadjusted theta_2 ",
-      unadjusted_theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta_1 ", theta_1.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta_2 ", theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+# print("theta_3 ", theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+#
+# print("unadjusted theta_2 ",
+#       unadjusted_theta_2.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 # print("unadjusted theta_3 ",
 #       theta_3.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 
@@ -486,11 +497,11 @@ R6_G = T6_G[0:3, 0:3]
 
 # Rotation from base to the 3rd joint
 # R0_3 = R0_1 * R1_2 * R2_3 * R_corr[0:3, 0:3]
-# R0_3 = simplify(T0_3[0:3, 0:3] * R_corr_3_and_5[0:3, 0:3])
-R0_3 = T0_3[0:3, 0:3]
+# # R0_3 = simplify(T0_3[0:3, 0:3] * R_corr_3_and_5[0:3, 0:3])
+# R0_3 = T0_3[0:3, 0:3]
+# # R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
+# # R0_3_corr = (R0_3 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
 # R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
-# R0_3_corr = (R0_3 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
-R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
 # R0_3_corr = R0_3 * rotate_z(pi/2)[0:3, 0:3]
 # R0_3_corr = R0_3_corr * rotate_x(pi/2)[0:3, 0:3]
 # R_check = R0_3 * R_corr_3_and_5[0:3, 0:3]
@@ -504,6 +515,38 @@ R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
 #
 # print R0_3_corr
 # print R_check
+
+
+# get the matrix for base link to joint 3, using computed theta1, 2, and 3 values
+R0_3 = T0_3[0:3, 0:3]
+R0_3 = R0_3.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# convert sympy matrix to numpy matrix to avoid errors
+# how to convert lifted from: https://stackoverflow.com/a/37491889
+# R0_3 = np.array(R0_3).astype(np.float64)
+
+# correct the orientation of the Rrpy matrix, make its axes align with the DH axes of the gripper
+Rrpy = Rrpy[0:3, 0:3]  * rotate_y(pi / 2)[0:3, 0:3] * rotate_z(pi)[0:3, 0:3]
+# get the matrix values for the wrist
+# R3_6 = (np.linalg.inv(R0_3)) * Rrpy
+R3_6 = Transpose(R0_3) * Rrpy
+
+
+# compute values for thetas 4, 5, and 6
+theta4 = atan2(R3_6[2, 2], -R3_6[0, 2])
+theta4 = theta4.evalf()
+theta5 = acos(R3_6[1, 2])
+theta5 = theta5.evalf()
+theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
+theta6 = theta6.evalf()
+
+if theta4 < -pi / 2:
+    theta4 = -(-pi - theta4)
+    theta5 = -theta5
+    theta6 = -(pi - theta6)
+elif theta4 > pi / 2:
+    theta4 = -(pi - theta4)
+    theta5 = -theta5
+    theta6 = -(-pi - theta6)
 
 # Rotation from base to the 4th joint
 # R0_4 = R0_1 * R1_2 * R2_3 * R3_4 * R_corr[0:3, 0:3]
@@ -553,46 +596,46 @@ R0_3_corr = R0_3 * R_corr_3_and_5[0:3, 0:3]
 #
 # R3_6 = R0_3.inv() * T_total[0:3, 0:3]
 
-R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# R0_3 = R0_3_corr.evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+#
+# Rrpy_corr = Rrpy[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
+# # Rrpy_corr = T_total[0:3, 0:3]
+# R3_6 = R0_3.inv() * Rrpy_corr
+# # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
+#
+# # TODO create a for loop that will test each and every possible permutation
+# # R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
+#
+#
+# # # TODO the value for theta 4 could simply be the negative value of roll
+# # # this is to counteract the roll of the arm
+# # unadjusted_theta4 = get_roll(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
+# # # theta4 = RADS_AT_REST_JOINT4 - unadjusted_theta4
+# # theta4 = unadjusted_theta4
+# # # TODO the value for theta 5 could simply be the value for pitch
+# # theta5 = get_pitch(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
+# # unadjusted_theta6 = get_yaw(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
+# # # theta6 = RADS_AT_REST_JOINT6 - unadjusted_theta6
+# # # TODO theta6 could simply be the opposite of theta4
+# # theta6 = unadjusted_theta6
+#
+#
+# # Experimental code that should work
+# R3_6_corr = ((R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]) #* rotate_z(pi)[0:3, 0:3]
+#
+# # R3_6_corr = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
+#
+# # Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
+# # are the formulas that return the desired values base on the different permutations we have tried
+# theta4 = -get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# theta5 = get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# # theta6 is simply the revers of theta4
+# theta6 = get_yaw(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 
-Rrpy_corr = Rrpy[0:3, 0:3] * R_corr_4_6_and_gripper[0:3, 0:3].evalf()
-# Rrpy_corr = T_total[0:3, 0:3]
-R3_6 = R0_3.inv() * Rrpy_corr
-# R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
 
-# TODO create a for loop that will test each and every possible permutation
-# R3_6 = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
-
-
-# TODO the value for theta 4 could simply be the negative value of roll
-# this is to counteract the roll of the arm
-unadjusted_theta4 = get_roll(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
-# theta4 = RADS_AT_REST_JOINT4 - unadjusted_theta4
-theta4 = unadjusted_theta4
-# TODO the value for theta 5 could simply be the value for pitch
-theta5 = get_pitch(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
-unadjusted_theta6 = get_yaw(R3_6).evalf(subs={q1: theta1, q2: theta2, q3: theta3, q4:q4_val, q5:q5_val, q6:q6_val})
-# theta6 = RADS_AT_REST_JOINT6 - unadjusted_theta6
-# TODO theta6 could simply be the opposite of theta4
-theta6 = unadjusted_theta6
-
-
-# Experimental code that should work
-R3_6_corr = ((R3_6 * rotate_y(pi / 2)[0:3, 0:3]) * rotate_z(-pi / 2)[0:3, 0:3]) #* rotate_z(pi)[0:3, 0:3]
-
-# R3_6_corr = (R3_6 * rotate_x(-pi/2)[0:3, 0:3]) * rotate_z(-pi/2)[0:3, 0:3]
-
-# Why -pitch for theta4 and roll for theta5? When theta4 is roll, and theta5 is pitch? This is because these are the
-# are the formulas that return the desired values base on the different permutations we have tried
-theta4 = -get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-theta5 = get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-# theta6 is simply the revers of theta4
-theta6 = -theta4
-
-
-alpha = get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-beta = -get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
-gamma = get_yaw(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# alpha = get_roll(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# beta = get_pitch(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
+# gamma = get_yaw(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 #
 # alpha = atan2(R3_6[1, 0], R3_6[0, 0])  # rotation about Z-axis
 # beta = atan2(-R3_6[2, 0],
@@ -603,20 +646,26 @@ gamma = get_yaw(R3_6_corr).evalf(subs={q1: theta1, q2: theta2, q3: theta3})
 # theta5 = beta.evalf(subs=({q1:theta1, q2:theta2, q3:theta3}))
 # theta6 = alpha.evalf(subs=({q1:theta1, q2:theta2, q3:theta3}))
 
-print("theta4 ", theta4)
-print("theta5 ", theta5)
-print("theta6 ", theta6)
+# print("q4_val ", q4_val)
+# print("q5_val ", q5_val)
+# print("q6_val ", q6_val)
+print("expected theta1 ", q1_val)
+print("theta1          ", theta1)
+print("expected theta2 ", q2_val)
+print("theta2          ", theta2)
+print("expected theta3 ", q3_val)
+print("theta3          ", theta3)
+print("expected theta4 ", q4_val)
+print("theta4          ", theta4.evalf())
+print("expected theta5 ", q5_val)
+print("theta5          ", theta5.evalf())
+print("expected theta6 ", q6_val)
+print("theta6          ", theta6.evalf())
 
-print("\n")
 
-print("q4_val ", q4_val)
-print("q5_val ", q5_val)
-print("q6_val ", q6_val)
-
-
-print("alpha ", alpha)
-print("beta ", beta)
-print("gamma ", gamma)
+# print("alpha ", alpha)
+# print("beta ", beta)
+# print("gamma ", gamma)
 
 
 # theta4_error_count = 0
@@ -693,3 +742,4 @@ print("gamma ", gamma)
 # print("theta x 6G", theta_x6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 # print("theta y 6G", theta_y6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
 # print("theta z 6G", theta_z6G.evalf(subs={q1: q1_val, q2: q2_val, q3: q3_val, q4: q4_val, q5: q5_val, q6: q6_val}))
+
