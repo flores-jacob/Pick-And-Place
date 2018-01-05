@@ -1,15 +1,5 @@
 ## Project: Kinematics Pick & Place
 
-### Project overview
-
-#### What is this?
-This is my implementation of the Udacity Robotics Nanodgree Pick-and-Place project.
-
-#### Problem statement
-A six degree of freedom (six jointed) robot arm (Kuka kr210) is in front of a shelf with 9 compartments. Cylinders spawn one at a time on one compartment at random. What needs to be done is for us to determine the correct angles and positions for each of the robot arm's joints so that the joints (and the robot as a whole) can trace a path to grab the spawned cylinder. A gif of what needs to happen is shown below(courtesy of Udacity Robotics Nanodegree material):
-
-![what_needs_to_happen](./writeup_images/what_needs_to_happen.gif)
-
 #### Solution overview
 To solve this problem, we need to perform Kinematic analysis, and five things need to be accomplished.
 1. Derive the Denavit-Hartenberg (DH) parameter table
@@ -22,7 +12,6 @@ To solve this problem, we need to perform Kinematic analysis, and five things ne
 4. Solve the inverse kinematics problem. What we want is, if we were to provide the robot with a desired end position for the gripper (say, the position of a target for it to grab), we should be able to get the resultant angles for each of all the robot joints. In this implementation, the inverse kinematics values of the robots first 3 joints (the arm part) were derived using trigonometry. These first 3 joints determine the wrist position (x, y, z coordinates).  Joint angles 4 to 6 were derived by using their combined rotational matrices. These three joints are responsible for the orientation of the gripper (roll, pitch, yaw). The final step is to introduce a correctional rotation to properly orient the gripper.
 
 5. The final step is to check if the joint values we get from our inverse kinematics are correct. We can do this by plugging in the joint values to our forward kinematics solution.  The output of the forward kinematics should equal (or at least be close) to the input we provided to our inverse kinematics. In this implementation, the error rates we obtained were less than 10e-12
-
 
 ## Solution proper
 
