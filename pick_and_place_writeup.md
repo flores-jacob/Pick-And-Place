@@ -1,7 +1,7 @@
 ## Project: Kinematics Pick & Place
 
 ### Kinematic Analysis
-#### DH Parameter Table
+#### Denavit-Hartenberg Parameter Table
 
 After evaluating the kr210.urdf.xacro file and running the forward_kinematics demo, here is the Kuka KR210's derived modified DH parameter table.
 
