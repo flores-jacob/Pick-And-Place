@@ -6,7 +6,7 @@
 This is my implementation of the Udacity Robotics Nanodgree Pick-and-Place project.
 
 #### Problem statement
-A six degree of freedom (six jointed) robot arm (Kuka kr210) is in front of a shelf with 9 compartments. Cylinders spawn one at a time on one compartment at random. What needs to be done is for us to determine the correct angles and positions for each of the robot arm's joints so that the joints (and the robot as a whole) can trace a path to grab the spawned cylinder. A gif of what needs to happen is shown below(courtesy of Udacity Robotics Nanodegree material):
+A six degree of freedom (six jointed) robot arm (Kuka kr210) is in front of a shelf with 9 compartments. Cylinders spawn one at a time on one compartment at random. What needs to be done is for us to determine the correct angles and positions for each of the robot arm's joints so that the joints (and the robot as a whole) can trace a path to grab the spawned cylinder and place it into a nearby bucket. A gif of what needs to happen is shown below(courtesy of Udacity Robotics Nanodegree material):
 
 ![what_needs_to_happen](./writeup_images/what_needs_to_happen.gif)
 
