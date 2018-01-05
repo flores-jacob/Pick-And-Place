@@ -40,7 +40,7 @@ A six degree of freedom (six jointed) robot arm (Kuka kr210) is in front of a sh
 
 - Error plotter script
     - This script will generate the error plot histograms that were used in this writeup. It requires numpy as well as [plotly](https://plot.ly/) to run. It will also need an `error_list.json` file that can be obtained by running the aforementioned [IK_server.py](./IK_server.py) solution with ROS, Gazebo, and MoveIt!. To run the error plotter script that is found below, simply call it with python. Make sure that error_list.json is in the same directory.
-    ```python
+    ```bash
     $ python ./error_plotter.py
     ```
     - [error_plotter.py](./error_plotter.py)
