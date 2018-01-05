@@ -16,6 +16,11 @@ A six degree of freedom (six jointed) robot arm (Kuka kr210) is in front of a sh
 - A video of the robot arm in action can be found here: [PICK AND PLACE VIDEO](./video/kuka_pick_and_place.ogg)
 
 - The solution code can be found here:[SOLUTION](./IK_server.py). It is necessary to have Gazebo, ROS, and MoveIt! to be all available to run this code. Running this code will produce an `error_list.json` file that can be used later on to plot error rates.
+    - How to run the code:
+        1. Install ROS Kinetic Kame on your Ubuntu machine
+        2. Follow the instructions in the [original repo's readme](https://github.com/udacity/RoboND-Kinematics-Project).
+        3. Look for the `inverse_kinematics.launch` file under `/RoboND-Kinematics-Project/kuka_arm/launch`. Make sure to set the `demo` flag to `false`.
+        4. Overwrite `IK_server.py` in `~/catkin_ws/src/RoboND-Kinematics-Project/kuka_arm/scripts` with this [script](./IK_server.py)
 
 - Stand alone solution code with sample data
     - This script is pretty much the same as the aforementioned solution code.  However, this can be run without having to open ROS, Gazebo, or MoveIt! as long as its dependencies which include numpy, sympy, and the sample data are available. This does not produce an `error_list.json` file, however it prints out error rates to the console.
