@@ -485,8 +485,8 @@ X coordinate error
 
 Y coordinate error
 
-[py error](writeup_images/py_error.png)
+![py error](writeup_images/py_error.png)
 
 Z coordinate error
 
-[pz error](writeup_images/pz_error.png)
+![pz error](writeup_images/pz_error.png)
