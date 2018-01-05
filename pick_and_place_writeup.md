@@ -1,11 +1,5 @@
 ## Project: Kinematics Pick & Place
 
----
-
-## [Rubric](https://review.udacity.com/#!/rubrics/972/view) Points
-
----
-
 ### Kinematic Analysis
 #### DH Parameter Table
 
