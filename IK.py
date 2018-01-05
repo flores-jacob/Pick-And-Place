@@ -10,7 +10,13 @@ RADS_AT_REST_JOINT3 = 1.60678078687695
 # These are the rads of joint 2 in resting position
 RADS_AT_REST_JOINT2 = pi/2 # 1.57079632679490
 
-
+# TODO
+# we can replace the value of SHELF with either
+#   - "shelf_3"
+#   - "shelf_4"
+#   - "shelf_7"
+#   - "shelf_9"
+# these represent preset values that can be found in sample_data.py
 SHELF = "shelf_9"
 
 
